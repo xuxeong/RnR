@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from .works import WorkBase, WorkOut # WorkBase를 임포트
+from .work import WorkBase, WorkOut # WorkBase를 임포트
 
 # 영화 생성 시 고유 필드만 정의 (WorkBase 상속)
 class MovieCreate(WorkBase):

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from app.database import get_db
-from app.models import Works, Books, Movies
-from app.schemas.work import WorkCreate, WorkOut, WorkUpdate # WorkUpdate 스키마 추가
-from app.schemas.book import BookCreate, BookOut, BookUpdate # BookUpdate 스키마 추가
-from app.schemas.movie import MovieCreate, MovieOut, MovieUpdate # MovieUpdate 스키마 추가
+from database import get_db
+from models import Works, Books, Movies
+from schemas.work import WorkCreate, WorkOut, WorkUpdate # WorkUpdate 스키마 추가
+from schemas.book import BookCreate, BookOut, BookUpdate # BookUpdate 스키마 추가
+from schemas.movie import MovieCreate, MovieOut, MovieUpdate # MovieUpdate 스키마 추가
 
 work_router = APIRouter(prefix="/works", tags=["Work"])
 

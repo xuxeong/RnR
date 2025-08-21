@@ -2,13 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
-from app.database import get_db
-from app.models import Users, Profile
-from app.schemas.user import UserCreate, UserLogin, UserUpdate, UserOut
-from app.schemas.profile import ProfileCreate, ProfileUpdate, ProfileOut
+from database import get_db
+from models import Users, Profile
+from schemas.user import UserCreate, UserLogin, UserUpdate, UserOut
+from schemas.profile import ProfileCreate, ProfileUpdate, ProfileOut
 # 비밀번호 해싱 및 JWT 관련 라이브러리 임포트
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from fastapi.security import OAuth2PasswordBearer
 
 # JWT 관련 설정 (실제 환경에서는 .env 파일에서 가져와야 함)
 SECRET_KEY = "your_secret_key"

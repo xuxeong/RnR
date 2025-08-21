@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-from app.database import get_db
-from app.models import Recommend_user, Recommend_work
-from app.schemas.recommend import RecommendUserOut, RecommendWorkOut
+from database import get_db
+from models import Recommend_user, Recommend_work
+from schemas.recommend import RecommendUserOut, RecommendWorkOut
 
 rec_router = APIRouter(prefix="/recommend", tags=["Recommend"])
 
