@@ -1,5 +1,7 @@
 from fastapi import FastAPI
-from routers.user import router as user_router
+from routers.user import user_router
+from routers.auth import auth_router
+from routers.profile import profile_router
 from routers.work import work_router 
 from routers.post import post_router 
 from routers.ai_request import ai_router 
@@ -26,6 +28,8 @@ app.add_middleware(
 )
 
 app.include_router(user_router)
+app.include_router(auth_router)
+app.include_router(profile_router)
 app.include_router(work_router)
 app.include_router(post_router)
 app.include_router(ai_router)

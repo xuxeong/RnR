@@ -10,3 +10,4 @@ from .like import Likes
 from .rating import Rating
 from .recommend_user import Recommend_user
 from .recommend_work import Recommend_work
+from .user_interest import User_interest

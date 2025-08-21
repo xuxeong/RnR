@@ -1,65 +1,105 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+# routers/post.py
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from typing import List, Optional
+
 from database import get_db
-from models import Posts
+from models import Posts, Users
 from schemas.post import PostCreate, PostUpdate, PostOut
+from auth_utils import get_current_user
 
-post_router = APIRouter(prefix="/posts", tags=["Post"])
+post_router = APIRouter(prefix="/posts", tags=["Posts"])
 
-# 새 게시글 작성 (created_at, modify_at, like, comment는 DB에서 자동 관리)
-@post_router.post("", response_model=PostOut)
-def create_post(payload: PostCreate, request: Request, db: Session = Depends(get_db)):
-    # request.client.host로 사용자의 IP 주소를 가져옴
-    ip_address = request.client.host if request.client else "unknown"
-    
-    post = Posts(
-        user_id=payload.user_id,
-        genre_id=payload.genre_id,
-        post_type=payload.post_type,
-        title=payload.title,
-        content=payload.content,
-        img=payload.img,
-        work_id=payload.work_id,
-        last_update_ip=ip_address,
-    )
-    db.add(post)
-    db.commit()
-    db.refresh(post)
-    return post
-
-# 게시글 목록 조회 (type 또는 work_id로 필터링)
+# 게시물 목록 조회
 @post_router.get("", response_model=List[PostOut])
-def list_posts(
-    type: Optional[str] = Query(None), 
-    work_id: Optional[int] = Query(None),
-    db: Session = Depends(get_db)
+async def list_posts(
+    db: Session = Depends(get_db),
+    # 쿼리 파라미터로 post_type을 받을 수 있도록 추가
+    post_type: Optional[str] = Query(None, enum=["review", "general", "vote"])
 ):
-    query = db.query(Posts)
-    if type:
-        query = query.filter(Posts.post_type == type)
-    if work_id:
-        query = query.filter(Posts.work_id == work_id)
-    return query.all()
+    """
+    모든 게시물을 조회합니다. post_type으로 필터링할 수 있습니다.
+    """
+    stmt = select(Posts)
+    if post_type:
+        stmt = stmt.where(Posts.post_type == post_type)
+    
+    result = await db.execute(stmt)
+    posts = result.scalars().all()
+    return posts
 
-# 특정 유저의 게시글 목록 조회
-@post_router.get("/user/{user_id}", response_model=List[PostOut])
-def list_user_posts(user_id: int, db: Session = Depends(get_db)):
-    return db.query(Posts).filter(Posts.user_id == user_id).all()
+# 새 게시물 생성
+@post_router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)
+async def create_post(
+    payload: PostCreate, 
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    새로운 게시물을 생성합니다.
+    """
+    new_post = Posts(
+        **payload.model_dump(),
+        user_id=current_user.user_id # 현재 로그인한 사용자의 ID를 추가
+    )
+    db.add(new_post)
+    await db.commit()
+    await db.refresh(new_post)
+    return new_post
 
-# 특정 게시글 수정
-@post_router.patch("/{post_id}", response_model=PostOut)
-def update_post(post_id: int, payload: PostUpdate, db: Session = Depends(get_db)):
-    post = db.query(Posts).get(post_id)
+# 특정 게시물 상세 조회
+@post_router.get("/{post_id}", response_model=PostOut)
+async def get_post(post_id: int, db: Session = Depends(get_db)):
+    """
+    ID로 특정 게시물을 조회합니다.
+    """
+    post = await db.get(Posts, post_id)
     if not post:
-        raise HTTPException(404, "Post not found")
-    
-    for k, v in payload.model_dump(exclude_unset=True).items():
-        setattr(post, k, v)
-    
-    # modify_at은 모델의 onupdate 속성으로 자동 업데이트됨
-    db.commit()
-    db.refresh(post)
+        raise HTTPException(status_code=404, detail="Post not found")
     return post
 
-# 기타: 게시글 삭제, 특정 게시글 조회 등 다른 엔드포인트도 동일한 방식으로 수정 가능
+# 게시물 수정
+@post_router.patch("/{post_id}", response_model=PostOut)
+async def update_post(
+    post_id: int, 
+    payload: PostUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    자신이 작성한 게시물을 수정합니다.
+    """
+    post = await db.get(Posts, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this post")
+
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(post, key, value)
+        
+    await db.commit()
+    await db.refresh(post)
+    return post
+
+# 게시물 삭제
+@post_router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_post(
+    post_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    자신이 작성한 게시물을 삭제합니다.
+    """
+    post = await db.get(Posts, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+        
+    await db.delete(post)
+    await db.commit()
+    return

@@ -7,7 +7,8 @@ class Users(Base):
     user_id = Column(Integer, primary_key=True, nullable=False)
     delete_at = Column(TIMESTAMP, nullable=True, doc="삭제 시 생성됨...")
     name = Column(String, nullable=False, doc="실명")
-    age = Column(Integer, nullable=False, doc="birth로 자동 계산")
+    # age 컬럼은 birth로 계산 가능하므로 모델에서 제외하는 것을 고려해볼 수 있습니다.
+    #age = Column(Integer, nullable=False, doc="birth로 자동 계산")
     birth = Column(Date, nullable=False)
     provider = Column(Enum("google", "kakao", "naver", "local", name="provider_type"), nullable=False)
     provider_id = Column(String, nullable=True, doc="소셜 플랫폼 고유 ID")
@@ -16,6 +17,8 @@ class Users(Base):
     email = Column(String, nullable=False)
     phone = Column(String, nullable=True)
     created_at = Column(TIMESTAMP, nullable=False)
+    modify_at = Column(TIMESTAMP(timezone=True), nullable=False)
+    last_login_ip = Column(String, nullable=True)
 
     profiles = relationship("Profile", back_populates="user")
     interests = relationship("User_interest", back_populates="user")

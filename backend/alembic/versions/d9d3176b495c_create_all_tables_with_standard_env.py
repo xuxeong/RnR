@@ -1,8 +1,8 @@
-"""Initial schema
+"""Create all tables with standard env
 
-Revision ID: dd26b6939b0d
+Revision ID: d9d3176b495c
 Revises: 
-Create Date: 2025-08-15 07:00:45.031980
+Create Date: 2025-08-22 05:20:59.827755
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'dd26b6939b0d'
+revision: str = 'd9d3176b495c'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,7 +30,6 @@ def upgrade() -> None:
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('delete_at', sa.TIMESTAMP(), nullable=True),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('age', sa.Integer(), nullable=False),
     sa.Column('birth', sa.Date(), nullable=False),
     sa.Column('provider', sa.Enum('google', 'kakao', 'naver', 'local', name='provider_type'), nullable=False),
     sa.Column('provider_id', sa.String(), nullable=True),
@@ -39,11 +38,13 @@ def upgrade() -> None:
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('phone', sa.String(), nullable=True),
     sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
+    sa.Column('modify_at', sa.TIMESTAMP(timezone=True), nullable=False),
+    sa.Column('last_login_ip', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('user_id')
     )
     op.create_table('profile',
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('nickname', sa.String(), nullable=True),
     sa.Column('bio', sa.String(), nullable=True),
     sa.Column('profile_img', sa.String(), nullable=True),

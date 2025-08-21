@@ -1,13 +1,89 @@
+// src/api/posts.js
+// 게시물 관련 API 호출 함수들을 정의합니다.
 import axiosInstance from './axiosInstance';
 
-// 전체 글 목록 조회 (GET /posts)
-export const getPosts = async () => {
-  const response = await axiosInstance.get('/posts');
-  return response.data;
+/**
+ * 게시물 목록 조회 API 호출
+ * GET /posts
+ * @param {string} [type] - 'review', 'general', 'vote' (선택 사항)
+ * @param {number} [workId] - 작품 ID (선택 사항)
+ * @returns {Promise<Array<object>>} - 게시물 목록 배열
+ */
+export const getPosts = async (type = null, workId = null) => {
+  try {
+    const params = {};
+    if (type) params.type = type;
+    if (workId) params.work_id = workId;
+    
+    const response = await axiosInstance.get('/posts', { params });
+    return response.data;
+  } catch (error) {
+    console.error('게시물 목록 조회 실패:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
-// 게시글 작성 (POST /posts)
+/**
+ * 특정 게시물 상세 정보 조회 API 호출
+ * GET /posts/{post_id}
+ * @param {number} postId - 게시물 ID
+ * @returns {Promise<object>} - 게시물 상세 정보
+ */
+export const getPostDetail = async (postId) => {
+  try {
+    const response = await axiosInstance.get(`/posts/${postId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`게시물 상세 조회 실패 (ID: ${postId}):`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * 새 게시물 생성 API 호출
+ * POST /posts
+ * @param {object} postData - 생성할 게시물 데이터 (PostCreate 스키마)
+ * @returns {Promise<object>} - 생성된 게시물 정보
+ */
 export const createPost = async (postData) => {
-  const response = await axiosInstance.post('/posts', postData);
-  return response.data;
+  try {
+    const response = await axiosInstance.post('/posts', postData);
+    return response.data;
+  } catch (error) {
+    console.error('게시물 생성 실패:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * 게시물 정보 수정 API 호출
+ * PATCH /posts/{post_id}
+ * @param {number} postId - 게시물 ID
+ * @param {object} updateData - 업데이트할 게시물 데이터 (PostUpdate 스키마)
+ * @returns {Promise<object>} - 업데이트된 게시물 정보
+ */
+export const updatePost = async (postId, updateData) => {
+  try {
+    const response = await axiosInstance.patch(`/posts/${postId}`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error(`게시물 업데이트 실패 (ID: ${postId}):`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * 게시물 삭제 API 호출
+ * DELETE /posts/{post_id}
+ * @param {number} postId - 게시물 ID
+ * @returns {Promise<void>}
+ */
+export const deletePost = async (postId) => {
+  try {
+    await axiosInstance.delete(`/posts/${postId}`);
+    console.log(`게시물 (ID: ${postId}) 삭제 성공`);
+  } catch (error) {
+    console.error(`게시물 삭제 실패 (ID: ${postId}):`, error.response?.data || error.message);
+    throw error;
+  }
 };

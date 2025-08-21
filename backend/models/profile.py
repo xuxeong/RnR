@@ -6,7 +6,7 @@ from database import Base
 class Profile(Base):
     __tablename__ = "profile"
     user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
-    profile_id = Column(Integer, primary_key=True)
+    profile_id = Column(Integer, primary_key=True, autoincrement=True)
     nickname = Column(String, nullable=True, doc="초기값은 login_id")
     bio = Column(String, nullable=True)
     profile_img = Column(String, nullable=True)

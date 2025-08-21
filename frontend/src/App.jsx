@@ -1,59 +1,62 @@
+// src/App.jsx
+// 이 파일은 애플리케이션의 메인 엔트리 포인트이며,
+// 라우팅 및 전역 컨텍스트를 설정합니다.
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LoginPage from './pages/LoginPage.jsx'; // LoginPage는 이제 모달 컴포넌트
+import PostsPage from './pages/PostsPage.jsx'; // 게시물 목록을 보여줄 PostsPage 추가
 import Header from './components/Header/Header.jsx';
-import HomePage from './pages/HomePage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import WorksPage from './pages/WorksPage.jsx';
-import LoginModal from './components/modal/LoginModal.jsx';
-import SignupModal from './components/modal/SignupModal.jsx';
+import Footer from './components/Footer/Footer.jsx';
+import { Outlet } from 'react-router-dom'; // Outlet을 임포트합니다.
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-  const [isSignupModalOpen, setSignupModalOpen] = useState(false);
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // 로그인 모달 상태
 
-  const handleLoginSuccess = (token) => {
-    localStorage.setItem('accessToken', token); // 토큰 저장
-    setIsLoggedIn(true);
-    setLoginModalOpen(false);
-  };
+  // 인증 상태 로딩 중
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-xl font-semibold text-gray-700">로딩 중...</div>
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken'); // 토큰 삭제
-    setIsLoggedIn(false);
-    // 필요하다면 홈페이지로 리디렉션
-  };
+  // 로그인하지 않았을 때의 화면: 인증되지 않았다면 로그인 모달을 띄울 수 있는 헤더와 기본 콘텐츠를 보여줍니다.
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header onLoginClick={() => setIsLoginModalOpen(true)} />
+        <main className="flex-grow container mx-auto p-4">
+          {/* Outlet을 사용해서, 로그인하지 않은 상태에서도 자식 라우트가 있다면 보여줄 수 있습니다. */}
+          {/* 현재 설정상으로는 특별히 보이는 것 없이 아래 문구가 기본입니다. */}
+          <Outlet />
+          <p className="text-gray-600 text-lg text-center mt-10">로그인하여 서비스를 이용해주세요.</p>
+        </main>
+        <Footer />
+        <LoginPage isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      </div>
+    );
+  }
 
+  // 로그인했을 때의 화면: 인증되었다면 헤더, 게시물 페이지, 푸터를 보여줍니다.
   return (
-    <BrowserRouter>
-      <Header 
-        isLoggedIn={isLoggedIn} 
-        onLoginClick={() => setLoginModalOpen(true)}
-        onSignupClick={() => setSignupModalOpen(true)}
-        onLogout={handleLogout}
-      />
-
-      <main style={{ paddingTop: '80px' }}> {/* 헤더 높이만큼 패딩 */}
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/works" element={<WorksPage />} />
-        </Routes>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Header />
+      <main className="flex-grow container mx-auto p-4">
+        {/* 이 위치에 주소에 맞는 페이지(PostsPage, ProfilePage 등)가 렌더링됩니다. */}
+        <Outlet />
       </main>
-
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setLoginModalOpen(false)} 
-        onLoginSuccess={handleLoginSuccess}
-      />
-      <SignupModal 
-        isOpen={isSignupModalOpen} 
-        onClose={() => setSignupModalOpen(false)} 
-      />
-    </BrowserRouter>
+      <Footer />
+    </div>
   );
 }
 
-export default App;
+// App 컴포넌트는 AuthProvider로 전체 앱을 감싸서 인증 컨텍스트를 제공합니다.
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
