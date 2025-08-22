@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 // updateProfile 함수를 임포트합니다.
-import { getMyProfile, updateProfile } from '../api/auth'; 
+import { getMyProfile, updateProfile } from '../api/auth';
+import { Link } from 'react-router-dom'; 
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -93,7 +94,15 @@ function ProfilePage() {
             <h2 className="text-sm font-medium text-gray-500">소개</h2>
             <p className="text-lg text-gray-900">{profile.bio || '아직 소개가 없습니다.'}</p>
           </div>
+          
           <div className="text-right">
+            {/* '계정 설정'으로 가는 링크 버튼 추가 */}
+            <Link 
+              to="/settings/account" 
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            >
+              계정 설정
+            </Link>
             <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">프로필 수정</button>
           </div>
         </div>
