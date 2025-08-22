@@ -7,7 +7,7 @@ from typing import List
 from datetime import datetime, timedelta
 
 from database import get_db
-from models import Users
+from models import Users, Profile
 from schemas.user import UserCreate, UserLogin, UserUpdate, UserOut
 
 from passlib.context import CryptContext

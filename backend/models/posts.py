@@ -1,22 +1,26 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Enum, ForeignKey, func
 from sqlalchemy.orm import relationship
 from database import Base
 
 class Posts(Base):
     __tablename__ = "posts"
-    post_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    post_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     genre_id = Column(Integer, ForeignKey("genre.genre_id"), nullable=False)
+    
     last_update_ip = Column(String, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False)
-    modify_at = Column(TIMESTAMP(timezone=True), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    modify_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    
     post_type = Column(Enum("review", "general", "vote", name="post_type"), nullable=False)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     img = Column(String, nullable=True)
+    
     hit = Column(Integer, default=0, nullable=False)
     like = Column(Integer, default=0, nullable=False)
     comment = Column(Integer, default=0, nullable=False)
+    
     work_id = Column(Integer, ForeignKey("works.work_id"), nullable=True)
     ai_summary = Column(String, nullable=True)
     ai_emotion = Column(Enum("positive", "neutral", "negative", name="ai_emotion"), nullable=True)

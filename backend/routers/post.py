@@ -1,6 +1,7 @@
 # routers/post.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List, Optional
@@ -34,6 +35,7 @@ async def list_posts(
 @post_router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)
 async def create_post(
     payload: PostCreate, 
+    request: Request,
     db: Session = Depends(get_db), 
     current_user: Users = Depends(get_current_user)
 ):
@@ -42,7 +44,10 @@ async def create_post(
     """
     new_post = Posts(
         **payload.model_dump(),
-        user_id=current_user.user_id # 현재 로그인한 사용자의 ID를 추가
+        user_id=current_user.user_id, # 현재 로그인한 사용자의 ID를 추가
+        created_at=datetime.now(),
+        modify_at=datetime.now(),
+        last_update_ip=request.client.host
     )
     db.add(new_post)
     await db.commit()

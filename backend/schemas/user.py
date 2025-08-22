@@ -1,3 +1,5 @@
+# backend/schemas/user.py
+
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import date, datetime
@@ -7,6 +9,7 @@ class UserBase(BaseModel):
     name: str
     birth: date
     provider: str
+    provider_id: Optional[str] = None
     email: EmailStr
     phone: Optional[str] = None
 
@@ -28,6 +31,8 @@ class UserOut(BaseModel):
     user_id: int
     name: str
     email: EmailStr
+    provider: str
+    provider_id: Optional[str] = None
     created_at: datetime
     profile: Optional[ProfileOut] = None
 

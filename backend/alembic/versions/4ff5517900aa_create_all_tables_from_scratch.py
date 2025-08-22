@@ -1,8 +1,8 @@
-"""Create all tables with standard env
+"""Create all tables from scratch
 
-Revision ID: d9d3176b495c
+Revision ID: 4ff5517900aa
 Revises: 
-Create Date: 2025-08-22 05:20:59.827755
+Create Date: 2025-08-22 16:17:48.230047
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd9d3176b495c'
+revision: str = '4ff5517900aa'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,6 +24,7 @@ def upgrade() -> None:
     op.create_table('genre',
     sa.Column('genre_id', sa.Integer(), nullable=False),
     sa.Column('label', sa.String(), nullable=False),
+    sa.Column('genre_type', sa.Enum('content', 'community', name='genre_type_enum'), server_default='content', nullable=False),
     sa.PrimaryKeyConstraint('genre_id')
     )
     op.create_table('users',
@@ -104,12 +105,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('work_id')
     )
     op.create_table('posts',
-    sa.Column('post_id', sa.Integer(), nullable=False),
+    sa.Column('post_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('genre_id', sa.Integer(), nullable=False),
     sa.Column('last_update_ip', sa.String(), nullable=False),
-    sa.Column('created_at', sa.TIMESTAMP(timezone=True), nullable=False),
-    sa.Column('modify_at', sa.TIMESTAMP(timezone=True), nullable=False),
+    sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('modify_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('post_type', sa.Enum('review', 'general', 'vote', name='post_type'), nullable=False),
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('content', sa.Text(), nullable=False),
@@ -121,7 +122,7 @@ def upgrade() -> None:
     sa.Column('ai_summary', sa.String(), nullable=True),
     sa.Column('ai_emotion', sa.Enum('positive', 'neutral', 'negative', name='ai_emotion'), nullable=True),
     sa.ForeignKeyConstraint(['genre_id'], ['genre.genre_id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['work_id'], ['works.work_id'], ),
     sa.PrimaryKeyConstraint('post_id')
     )
