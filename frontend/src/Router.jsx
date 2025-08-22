@@ -21,7 +21,7 @@ export default function Router() {
         <Route path="/" element={<App />}>
           {/* '/' 경로로 접속하면 기본으로 PostsPage를 보여줍니다. */}
           <Route index element={<PostsPage />} />
-
+          
           {/* '/profile' 경로로 접속하면 ProfilePage를 보여줍니다. */}
           <Route path="profile" element={<ProfilePage />} />
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getPosts } from '../api/post';
 import CreatePostModal from '../components/CreatePostModal/CreatePostModal'; // 새로 만든 모달 임포트
 import { useAuth } from '../context/AuthContext';
+import PostCard from '../components/PostCard/PostCard';
 
 export default function PostsPage() {
   const { isAuthenticated } = useAuth();
@@ -98,28 +99,17 @@ export default function PostsPage() {
         </div>
 
         {/* 게시물 목록 */}
-        {posts.length === 0 ? (
-          <p className="text-center text-gray-600 text-lg">아직 게시물이 없습니다. 첫 글을 작성해보세요!</p>
+         {posts.length === 0 && !loading ? (
+          <div className="text-center text-gray-500 py-20">
+            <p className="text-xl">아직 게시물이 없습니다.</p>
+            <p className="mt-2">첫 글을 작성해보세요!</p>
+          </div>
         ) : (
+          // 게시물 목록을 PostCard를 이용해 그리드 형태로 표시
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {/* ... 게시물 카드 렌더링 부분은 그대로 ... */}
             {posts.map((post) => (
-            <div key={post.post_id} className="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition duration-300">
-              <img 
-                src={post.img || `https://placehold.co/300x200/e0e0e0/555555?text=Post+Image`} 
-                alt={post.title} 
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <h3 className="text-xl font-semibold text-gray-800 truncate mb-2">{post.title}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2">{post.content}</p>
-                <div className="flex items-center justify-between text-gray-500 text-xs mt-3">
-                  <span>{post.user_id}</span> {/* TODO: 사용자 닉네임으로 변경 */}
-                  <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+              <PostCard key={post.post_id} post={post} />
+            ))}
           </div>
         )}
       </div>

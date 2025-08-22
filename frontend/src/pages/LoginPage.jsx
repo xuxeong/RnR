@@ -1,18 +1,25 @@
 // src/pages/LoginPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { register, getGoogleLoginUrl } from '../api/auth';
 
-export default function LoginPage({ isOpen, onClose }) {
-  //const [email, setEmail] = useState('');
+export default function LoginPage({ isOpen, onClose, initialMode = 'login' }) {
+  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState(''); //비밀번호 확인 상태 변수
   const [name, setName] = useState('');
   const [birth, setBirth] = useState('');
   const [loginId, setLoginId] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(initialMode === 'register');
   const { login } = useAuth();
 
+  useEffect(() => {
+  if (isOpen) {
+    setIsRegistering(initialMode === 'register');
+  }
+}, [initialMode, isOpen]);
+  
   if (!isOpen) return null;
 
   const handleLoginSubmit = async (e) => {
@@ -27,6 +34,11 @@ export default function LoginPage({ isOpen, onClose }) {
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    if(password !== confirm){
+      alert('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
     try {
       const userData = {
         email,
@@ -42,6 +54,7 @@ export default function LoginPage({ isOpen, onClose }) {
       // 입력 필드 초기화
       setEmail('');
       setPassword('');
+      setConfirm('');
       setName('');
       setBirth('');
       setLoginId('');
@@ -61,7 +74,7 @@ export default function LoginPage({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md relative">
+      <div className="bg-lightPink p-8 rounded-xl shadow-2xl w-full max-w-md relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -72,14 +85,14 @@ export default function LoginPage({ isOpen, onClose }) {
         {/* 로그인 뷰 */}
         {!isRegistering ? (
           <>
-            <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">WELCOME!!</h2>
+            <h2 className="text-3xl font-julius font-bold text-center text-browny mb-8">WELCOME!!</h2>
             <form onSubmit={handleLoginSubmit} className="space-y-6">
               <input
                 type="text"
                 placeholder="이메일 또는 로그인 ID"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
                 required
               />
               <input
@@ -87,30 +100,30 @@ export default function LoginPage({ isOpen, onClose }) {
                 placeholder="PW"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
                 required
               />
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700"
+                className="bg-pinkBrown w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-pinkBrown-700"
               >
                 login
               </button>
             </form>
             
-            <p className="text-gray-500 my-4 text-center">소셜계정으로 회원가입</p>
+            <p className="text-browny my-4 text-center">소셜계정으로 로그인</p>
             <div className="flex justify-center space-x-4">
-              <button onClick={handleGoogleLogin} className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
+              <button onClick={handleGoogleLogin} className="w-12 h-12 flex items-center justify-center rounded-full bg-light hover:bg-gray-300">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" className="w-6 h-6"/>
               </button>
               {/* 다른 소셜 로그인 버튼 추가 공간 */}
             </div>
 
-            <p className="text-center text-gray-600 mt-6">
+            <p className="text-center text-brown mt-6">
               계정이 없으신가요?
               <button
                 onClick={() => setIsRegistering(true)}
-                className="text-blue-600 font-semibold ml-2 hover:underline"
+                className="text-pinkBrown ml-2 hover:underline"
               >
                 회원가입
               </button>
@@ -119,14 +132,14 @@ export default function LoginPage({ isOpen, onClose }) {
         ) : (
           /* 회원가입 뷰 */
           <>
-            <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">회원가입</h2>
+            <h2 className="text-3xl font-julius font-bold text-center text-browny mb-8">welcome!!</h2>
             <form onSubmit={handleRegisterSubmit} className="space-y-6">
               <input
                 type="email"
                 placeholder="이메일"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
                 required
               />
               <input
@@ -134,7 +147,15 @@ export default function LoginPage({ isOpen, onClose }) {
                 placeholder="비밀번호"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
+                required
+              />
+              <input
+                type="password"
+                placeholder="비밀번호확인"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
                 required
               />
               <input
@@ -142,7 +163,7 @@ export default function LoginPage({ isOpen, onClose }) {
                 placeholder="이름"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
                 required
               />
               <input
@@ -150,7 +171,7 @@ export default function LoginPage({ isOpen, onClose }) {
                 placeholder="생년월일"
                 value={birth}
                 onChange={(e) => setBirth(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
                 required
               />
               <input
@@ -158,21 +179,21 @@ export default function LoginPage({ isOpen, onClose }) {
                 placeholder="로그인 ID (선택 사항)"
                 value={loginId}
                 onChange={(e) => setLoginId(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
+                className="bg-pink w-full p-3 rounded-full focus:ring-light-500"
               />
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700"
+                className="bg-pinkBrown w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-pinkBrown-700"
               >
                 가입
               </button>
             </form>
 
-            <p className="text-center text-gray-600 mt-6">
+            <p className="text-center text-brown mt-6">
               이미 계정이 있으신가요?
               <button
                 onClick={() => setIsRegistering(false)}
-                className="text-blue-600 font-semibold ml-2 hover:underline"
+                className="text-pinkBrown ml-2 hover:underline"
               >
                 로그인
               </button>

@@ -4,7 +4,9 @@ import React, { useState } from 'react'; // useState 임포트 추가
 import { useAuth } from '../../context/AuthContext.jsx'; // 로그아웃 기능을 위해 AuthContext 사용
 import { Link } from 'react-router-dom'; // <a> 태그 대신 Link를 사용합니다.
 
-export default function Header({ onLoginClick }) { // onLoginClick 프롭스 추가
+import logo from '../../assets/logo.svg'
+
+export default function Header({ onLoginClick}) { // onLoginClick 프롭스 추가
   const { user, logout } = useAuth(); // 현재 로그인된 사용자 정보와 로그아웃 함수 가져오기
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 드롭다운 메뉴 상태
 
@@ -17,21 +19,35 @@ export default function Header({ onLoginClick }) { // onLoginClick 프롭스 추
     setIsDropdownOpen(false); // 로그아웃 후 드롭다운 닫기
   };
 
+  // 로그인 텍스트 변수
+  const loginElement = (
+    <button onClick={() => onLoginClick('login')}
+                className="font-julius text-brown text-xl px-4 py-2 hover:text-blue-200 transition duration-200">Login</button>
+  );
+
+  // 회원가입 텍스트 변수
+  const signupElement = (
+    <button onClick={() => onLoginClick('register')}
+                className="font-julius text-lightBrown text-xl px-4 py-2 hover:text-blue-200 transition duration-200">Signup</button>
+  );
+
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 shadow-lg">
+    <header className="text-white p-4 shadow-lg border-black border-t border-b">
       <div className="container mx-auto flex justify-between items-center">
         {/* 로고를 클릭하면 홈('/')으로 갑니다. */}
         <h1 className="text-3xl font-extrabold tracking-tight">
-          <Link to="/" className="hover:text-blue-200">R&R</Link>
+          <Link to="/" className="hover:text-blue-200"><img src={logo} width="150" height="150"/></Link>
         </h1>
         <nav className="flex items-center space-x-6">
           {/* Works 메뉴를 클릭하면 '/works'로 갑니다. */}
-          {/* 주요 메뉴 링크 */}          
-          <Link to="/works" className="text-lg font-medium hover:text-blue-200">Works</Link>
-          <Link to="/Recommend" className="text-lg font-medium hover:text-blue-200 transition duration-200">Recommend</Link>
-          <Link to="/Community" className="text-lg font-medium hover:text-blue-200 transition duration-200">Community</Link>
+          {/* 주요 메뉴 링크 */}
+          {!user && loginElement}          
+          {!user && signupElement}
+          <Link to="/works" className="text-black font-junge text-xl px-4 font-medium hover:text-blue-200">Works</Link>
+          <Link to="/Recommend" className="text-black font-junge text-xl px-4 font-medium hover:text-blue-200 transition duration-200">Recommend</Link>
+          <Link to="/Community" className="text-black font-junge text-xl px-4 font-medium hover:text-blue-200 transition duration-200">Community</Link>
          
-          {user ? (
+          {user && (
             <div className="relative">
               {/* 프로필 아이콘 (원형) */}
               <button
@@ -43,34 +59,19 @@ export default function Header({ onLoginClick }) { // onLoginClick 프롭스 추
 
               {/* 드롭다운 메뉴 */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                  <Link to="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">MY FEED</Link> #바꿔야됨
-                  <Link to="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">LIKES</Link> # 바꿔야됨
-                  <Link to="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">SETTINGS</Link>
+                <div className="bg-gray absolute right-0 mt-2 w-40 bg-white shadow-lg py-1 z-10">
+                  <Link to="/myFeed" className="text-lightBrown font-julius block px-4 py-2 text-center hover:bg-gray-100">MY FEED</Link>
+                  <Link to="/likes" className="text-lightBrown font-julius block px-4 py-2 text-center hover:bg-gray-100">LIKES</Link>
+                  <Link to="/profile" className="text-lightBrown font-julius block px-4 py-2 text-center hover:bg-gray-100">SETTINGS</Link>
                   <button
                     onClick={handleLogoutClick}
-                    className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                    className="text-center block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
                   >
                     LOGOUT
                   </button>
                 </div>
               )}
             </div>
-          ) : (
-            <>
-              <button
-                onClick={onLoginClick}
-                className="px-4 py-2 bg-blue-500 rounded-lg font-semibold hover:bg-blue-600 transition duration-200 shadow-md"
-              >
-                LOGIN
-              </button>
-              <button
-                onClick={() => { /* SIGNUP 모달 열기 또는 페이지 이동 */ }}
-                className="px-4 py-2 bg-purple-500 rounded-lg font-semibold hover:bg-purple-600 transition duration-200 shadow-md"
-              >
-                SIGNUP
-              </button>
-            </>
           )}
         </nav>
       </div>

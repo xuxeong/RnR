@@ -11,8 +11,9 @@ import { Outlet } from 'react-router-dom'; // Outlet을 임포트합니다.
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // 로그인 모달 상태
-
+  const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false); // 로그인 모달 상태
+  const [loginMode, setLoginMode] = React.useState('login');
+  
   // 인증 상태 로딩 중
   if (isLoading) {
     return (
@@ -24,9 +25,13 @@ function AppContent() {
 
   // 로그인하지 않았을 때의 화면: 인증되지 않았다면 로그인 모달을 띄울 수 있는 헤더와 기본 콘텐츠를 보여줍니다.
   if (!isAuthenticated) {
+    const openLogin = (mode = 'login') => {
+      setLoginMode(mode);
+      setIsLoginModalOpen(true);
+    };
     return (
       <div className="flex flex-col min-h-screen bg-gray-50">
-        <Header onLoginClick={() => setIsLoginModalOpen(true)} />
+        <Header onLoginClick={openLogin} />
         <main className="flex-grow container mx-auto p-4">
           {/* Outlet을 사용해서, 로그인하지 않은 상태에서도 자식 라우트가 있다면 보여줄 수 있습니다. */}
           {/* 현재 설정상으로는 특별히 보이는 것 없이 아래 문구가 기본입니다. */}
@@ -34,7 +39,7 @@ function AppContent() {
           <p className="text-gray-600 text-lg text-center mt-10">로그인하여 서비스를 이용해주세요.</p>
         </main>
         <Footer />
-        <LoginPage isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+        <LoginPage isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} initialMode={loginMode} />
       </div>
     );
   }

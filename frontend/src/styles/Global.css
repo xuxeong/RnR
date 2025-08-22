@@ -1,4 +1,9 @@
 /* 기본 스타일 초기화 및 앱 전체 폰트, 배경색 등 설정 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
