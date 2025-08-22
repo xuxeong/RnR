@@ -1,11 +1,10 @@
 // src/pages/AccountSettingsPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import { getCurrentUser } from '../api/auth'; // 현재 사용자 정보(이름, 이메일 등)를 가져오는 API
-// import { updateUser } from '../api/user'; // 사용자 정보를 업데이트하는 API (api/auth.js에 만들어야 함)
+import { getCurrentUser, updateUser } from '../api/auth'; // 현재 사용자 정보(이름, 이메일 등)를 가져오고 업데이트하는 API
 
 export default function AccountSettingsPage() {
-  const [user, setUser] = useState({ name: '', phone: '' });
+  const [user, setUser] = useState({ name: '', phone: '' , loginId: ''});
   const [password, setPassword] = useState({ current: '', new: '', confirm: '' });
   const [loading, setLoading] = useState(true);
 
@@ -13,7 +12,10 @@ export default function AccountSettingsPage() {
     const fetchUser = async () => {
       try {
         const userData = await getCurrentUser();
-        setUser({ name: userData.name, phone: userData.phone || '' });
+        setUser({ 
+          name: userData.name, 
+          phone: userData.phone || '', 
+          loginId: userData.login_id || ''});
         setLoading(false);
       } catch (error) {
         console.error("사용자 정보 로딩 실패:", error);
@@ -31,10 +33,18 @@ export default function AccountSettingsPage() {
     setPassword({ ...password, [e.target.name]: e.target.value });
   };
 
-  const handleUserSubmit = (e) => {
+  const handleUserSubmit = async (e) => {
     e.preventDefault();
-    // TODO: 이름, 전화번호 업데이트 API 호출
-    alert('사용자 정보가 저장되었습니다. (API 연동 필요)');
+    try{
+      await updateUser({
+        login_id: user.loginId,
+        name: user.name,
+        phone: user.phone,
+      });
+      alert('사용자 정보가 저장되었습니다.');
+    }catch(error){
+      alert('사용자 정보 저장에 실패했습니다: ${error.response?.data?.detail || error.message}');
+    }
   };
 
   const handlePasswordSubmit = (e) => {
@@ -51,7 +61,7 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md space-y-8">
-      {/* 이름 및 연락처 변경 폼 */}
+      {/* 이름, 연락처, 로그인ID 변경 폼 */}
       <form onSubmit={handleUserSubmit}>
         <h2 className="text-2xl font-bold">계정 정보</h2>
         <div className="mt-4 space-y-4">
@@ -62,6 +72,10 @@ export default function AccountSettingsPage() {
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">연락처</label>
             <input type="tel" name="phone" id="phone" value={user.phone} onChange={handleUserChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+          </div>
+          <div>
+            <label htmlFor="loginId" className="block text-sm font-medium text-gray-700">로그인 아이디</label>
+            <input type="text" name="loginId" id="loginId" value={user.loginId} onChange={handleUserChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
           </div>
         </div>
         <div className="text-right mt-4">

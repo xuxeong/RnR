@@ -84,17 +84,23 @@ async def read_user_me(current_user: Users = Depends(get_current_user)):
 # 내 정보 수정 (인증 필요)
 @user_router.patch("/me", response_model=UserOut)
 async def update_user_me(payload: UserUpdate, db: Session = Depends(get_db), current_user: Users = Depends(get_current_user)):
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        if key == "pw":
-            hashed_password = pwd_context.hash(value)
-            setattr(current_user, key, hashed_password)
-        else:
-            setattr(current_user, key, value)
-            
-    current_user.modify_at = datetime.now()
-    await db.commit()
-    await db.refresh(current_user)
-    return current_user
+    try:
+        for key, value in payload.model_dump(exclude_unset=True).items():
+            if key == "pw":
+                hashed_password = pwd_context.hash(value)
+                setattr(current_user, key, hashed_password)
+            else:
+                setattr(current_user, key, value)
+            print(f"Set attribute {key} to {getattr(current_user, key)}")
+        current_user.modify_at = datetime.now()
+        await db.commit()
+        await db.refresh(current_user)
+        return current_user
+    except Exception as e:
+        await db.rollback()
+        print(f"Error in update_user_me: {e}")
+        raise
+
 
 # 회원 탈퇴 (인증 필요)
 @user_router.patch("/me/deactivate", status_code=status.HTTP_204_NO_CONTENT)

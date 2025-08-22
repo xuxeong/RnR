@@ -25,6 +25,7 @@ class UserLogin(BaseModel):
     pw: str
 
 class UserUpdate(BaseModel):
+    login_id: Optional[str] = None
     name: Optional[str] = None
     phone: Optional[str] = None
     pw: Optional[str] = None

@@ -93,6 +93,18 @@ export const updateProfile = async (profileData) => {
   }
 };
 
+//사용자 계정 업데이트 API 호출
+export const updateUser = async (userData) => {
+  try {
+    const response = await axiosInstance.patch('/users/me', userData);
+    return response.data;
+  } catch (error) {
+    console.error('사용자 정보 업데이트 실패:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
 /**
  * 사용자 계정 비활성화 (탈퇴 유예) API 호출
  * PATCH /users/me/deactivate
