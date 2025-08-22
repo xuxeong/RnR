@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { register, getGoogleLoginUrl } from '../api/auth';
 
 export default function LoginPage({ isOpen, onClose }) {
-  const [email, setEmail] = useState('');
+  //const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [birth, setBirth] = useState('');
@@ -17,7 +18,7 @@ export default function LoginPage({ isOpen, onClose }) {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      await login(username, password);
       onClose();
     } catch (error) {
       alert('로그인 실패: 이메일 또는 비밀번호를 확인해주세요.');
@@ -74,10 +75,10 @@ export default function LoginPage({ isOpen, onClose }) {
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">WELCOME!!</h2>
             <form onSubmit={handleLoginSubmit} className="space-y-6">
               <input
-                type="email"
-                placeholder="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                placeholder="이메일 또는 로그인 ID"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
               />

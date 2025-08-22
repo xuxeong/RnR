@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy import or_
 from typing import List
 from datetime import datetime, timedelta
 
@@ -62,7 +63,7 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
 # 로그인
 @user_router.post("/login")
 async def login(payload: UserLogin, db: Session = Depends(get_db)):
-    stmt = select(Users).where(Users.email == payload.email)
+    stmt = select(Users).where(or_(Users.email == payload.username, Users.login_id == payload.username))
     result = await db.execute(stmt)
     user = result.scalars().first()
 

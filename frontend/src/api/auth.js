@@ -4,13 +4,13 @@ import axiosInstance from './axiosInstance';
 
 /**
  * 사용자 로그인 API 호출
- * @param {string} email - 사용자 이메일
+ * @param {string} username - 사용자 이메일
  * @param {string} pw - 사용자 비밀번호
  * @returns {Promise<object>} - 로그인 성공 시 토큰 정보를 포함한 응답
  */
-export const login = async (email, pw) => {
+export const login = async (username, pw) => {
   try {
-    const response = await axiosInstance.post('/users/login', { email, pw });
+    const response = await axiosInstance.post('/users/login', { username, pw });
     return response.data; 
   } catch (error) {
     console.error('로그인 실패:', error.response?.data || error.message);

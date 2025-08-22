@@ -34,10 +34,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // 로그인 함수
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     setIsLoading(true);
     try {
-      const data = await authLogin(email, password); // auth.js의 login 함수 호출
+      const data = await authLogin(username, password); // auth.js의 login 함수 호출
       localStorage.setItem('accessToken', data.access_token); // 토큰 저장
       const userData = await getCurrentUser(); // 로그인 후 사용자 정보 다시 가져오기
       setUser(userData);

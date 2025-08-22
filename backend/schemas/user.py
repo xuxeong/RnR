@@ -18,8 +18,10 @@ class UserCreate(UserBase):
     pw: str
 
 class UserLogin(BaseModel):
-    login_id: Optional[str] = None
-    email: Optional[EmailStr] = None
+    # login_id와 email을 username으로 통합
+    #login_id: Optional[str] = None
+    #email: Optional[EmailStr] = None
+    username: str
     pw: str
 
 class UserUpdate(BaseModel):
