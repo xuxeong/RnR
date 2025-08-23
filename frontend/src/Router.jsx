@@ -23,7 +23,7 @@ export default function Router() {
         {/* App 컴포넌트가 모든 페이지의 기본 레이아웃(헤더, 푸터)을 담당하게 합니다. */}
         <Route path="/" element={<App />}>
           {/* '/' 경로로 접속하면 기본으로 PostsPage를 보여줍니다. */}
-          <Route path="community" element={<PostsPage />} />
+          <Route index element={<PostsPage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
           
           {/* '/profile' 경로로 접속하면 ProfilePage를 보여줍니다. */}
