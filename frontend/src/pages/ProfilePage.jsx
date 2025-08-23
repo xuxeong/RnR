@@ -1,12 +1,14 @@
 // src/pages/ProfilePage.jsx
 
 import React, { useState, useEffect } from 'react';
-// updateProfile 함수를 임포트합니다.
-import { getMyProfile, updateProfile } from '../api/auth';
+import { getMyProfile, updateProfile } from '../api/auth'; // updateProfile 함수를 임포트합니다.
+import { getMyInterests } from '../api/recommend'; //관심장르 API
+
 import { Link } from 'react-router-dom'; 
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
+  const [interests, setInterests]= useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,8 +16,13 @@ function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const profileData = await getMyProfile();
+        // 프로필과 관심 장르를 함께 불러옵니다.
+        const [profileData, interestsData] = await Promise.all([
+            getMyProfile(),
+            getMyInterests()
+        ]);
         setProfile(profileData);
+        setInterests(interestsData);
       } catch (err) {
         setError("프로필 정보를 불러오는 데 실패했습니다.");
         console.error(err);
@@ -99,13 +106,26 @@ function ProfilePage() {
             {/* '계정 설정'으로 가는 링크 버튼 추가 */}
             <Link 
               to="/settings/account" 
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+              className="px-4 py-2 bg-pink text-white rounded-md hover:bg-gray-700"
             >
               계정 설정
             </Link>
             <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">프로필 수정</button>
           </div>
         </div>
+      )}
+      {/* 관심 장르 표시 부분 추가 */}
+      {!isEditing && interests.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-sm font-medium text-gray-500">나의 관심 장르</h2>
+            <div className="flex flex-wrap gap-2 mt-2">
+                {interests.map(genre => (
+                    <span key={genre.genre_id} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                        # {genre.label}
+                    </span>
+                ))}
+            </div>
+          </div>
       )}
     </div>
   );

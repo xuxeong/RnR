@@ -1,28 +1,100 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select
 from typing import List
+
 from database import get_db
-from models import Recommend_user, Recommend_work
-from schemas.recommend import RecommendUserOut, RecommendWorkOut
+from models import Recommend_work, Recommend_user, User_interest, Users, Works
+from schemas.recommend import RecommendUserOut
+from schemas.work import WorkOut
+from schemas.genre import GenreOut
+from .user import get_current_user
 
-rec_router = APIRouter(prefix="/recommend", tags=["Recommend"])
+recommend_router = APIRouter(prefix="/recommend", tags=["Recommendation"])
 
-@rec_router.get("/users", response_model=List[RecommendUserOut])
-def recommend_users(user_id: int, limit: int = 10, db: Session = Depends(get_db)):
-    return (
-        db.query(Recommend_user)
-        .filter(Recommend_user.user_id == user_id)
-        .order_by(Recommend_user.score.desc())
-        .limit(limit)
-        .all()
-    )
-
-@rec_router.get("/works", response_model=List[RecommendWorkOut])
-def recommend_works(user_id: int, limit: int = 10, db: Session = Depends(get_db)):
-    return (
-        db.query(Recommend_work)
-        .filter(Recommend_work.user_id == user_id)
+# 1. 작품 추천 API
+@recommend_router.get("/works", response_model=List[WorkOut])
+async def get_work_recommendations(
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """현재 로그인한 사용자에게 추천하는 작품 목록을 반환합니다."""
+    stmt = (
+        select(Recommend_work)
+        .options(
+            # Recommend_work와 Work를 조인하고,
+            # Work와 관련된 book, movie, genres를 각각 로드합니다.
+            joinedload(Recommend_work.work).joinedload(Works.book),
+            joinedload(Recommend_work.work).joinedload(Works.movie),
+            joinedload(Recommend_work.work).subqueryload(Works.genres)
+        )
+        .where(Recommend_work.user_id == current_user.user_id)
         .order_by(Recommend_work.score.desc())
-        .limit(limit)
-        .all()
+        .limit(20)
     )
+    result = await db.execute(stmt)
+    recommendations = result.scalars().all()
+    
+    # WorkOut 스키마에 맞게 결과 가공
+    response_data = []
+    for rec in recommendations:
+        if rec.work:
+            work_detail = rec.work.book if rec.work.Type == 'book' else rec.work.movie
+            if work_detail:
+                response_data.append({
+                    "work_id": rec.work.work_id, "Type": rec.work.Type, "rating": rec.work.rating,
+                    "name": work_detail.name, "created_at": work_detail.created_at,
+                    "publisher": work_detail.publisher, "cover_img": work_detail.cover_img,
+                    "reward": work_detail.reward, "ai_summary": work_detail.ai_summary,
+                    "author": getattr(work_detail, 'author', None),
+                    "ISBN": getattr(work_detail, 'ISBN', None),
+                    "director": getattr(work_detail, 'director', None),
+                    "genres": rec.work.genres
+                })
+    return response_data
+
+# 2. 비슷한 사용자 추천 API
+@recommend_router.get("/users", response_model=List[RecommendUserOut])
+async def get_user_recommendations(
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """현재 로그인한 사용자에게 추천하는 비슷한 사용자 목록을 반환합니다."""
+    stmt = (
+        select(Recommend_user)
+        .options(joinedload(Recommend_user.target).joinedload(Users.profiles))
+        .where(Recommend_user.user_id == current_user.user_id)
+        .order_by(Recommend_user.score.desc())
+        .limit(10)
+    )
+    result = await db.execute(stmt)
+    recommendations = result.scalars().unique().all()
+
+    response_data = []
+    for rec in recommendations:
+        if rec.target:
+            profile_data = rec.target.profiles[0] if rec.target.profiles else None
+            response_data.append({
+                "target_id": rec.target.user_id,
+                "score": rec.score,
+                "name": rec.target.name,
+                "profile": profile_data 
+            })
+    return response_data
+
+# 3. 사용자 관심 장르 API
+@recommend_router.get("/interests", response_model=List[GenreOut])
+async def get_user_interest_genres(
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """현재 로그인한 사용자의 관심 장르 목록을 반환합니다."""
+    stmt = (
+        select(User_interest)
+        .options(joinedload(User_interest.genre))
+        .where(User_interest.user_id == current_user.user_id)
+    )
+    result = await db.execute(stmt)
+    interests = result.scalars().all()
+    
+    return [interest.genre for interest in interests if interest.genre]

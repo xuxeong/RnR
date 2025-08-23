@@ -9,6 +9,7 @@ import WorksPage from './pages/WorksPage';
 import PostsPage from './pages/PostsPage'; // 메인 페이지로 사용할 컴포넌트
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
+import RecommendPage from './pages/RecommendPage';
 
 export default function Router() {
   return (
@@ -29,6 +30,9 @@ export default function Router() {
           <Route path="works" element={<WorksPage />} />
           {/* 계정 설정 페이지 경로 추가 */}
           <Route path="settings/account" element={<AccountSettingsPage />} />
+          
+          {/* Recommend 페이지 경로 추가 */}
+          <Route path="recommend" element={<RecommendPage />} />
           
         </Route>
       </Routes>

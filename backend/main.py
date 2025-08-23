@@ -11,7 +11,7 @@ from routers.post import post_router
 from routers.genre import genre_router
 from routers.rating import rating_router
 from routers.ai_request import ai_router 
-from routers.recommend import rec_router 
+from routers.recommend import recommend_router
 
 # CORS 미들웨어 추가를 위한 임포트
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,7 +41,7 @@ app.include_router(post_router)
 app.include_router(genre_router)
 app.include_router(rating_router)
 app.include_router(ai_router)
-app.include_router(rec_router)
+app.include_router(recommend_router)
 
 @app.get("/")
 def hello():

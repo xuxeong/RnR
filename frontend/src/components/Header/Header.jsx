@@ -44,7 +44,7 @@ export default function Header({ onLoginClick}) { // onLoginClick 프롭스 추�
           {!user && loginElement}          
           {!user && signupElement}
           <Link to="/works" className="text-black font-junge text-xl px-4 font-medium hover:text-blue-200">Works</Link>
-          <Link to="/Recommend" className="text-black font-junge text-xl px-4 font-medium hover:text-blue-200 transition duration-200">Recommend</Link>
+          <Link to="/recommend" className="text-black font-junge text-xl px-4 font-medium hover:text-blue-200 transition duration-200">Recommend</Link>
           <Link to="/Community" className="text-black font-junge text-xl px-4 font-medium hover:text-blue-200 transition duration-200">Community</Link>
          
           {user && (
