@@ -108,3 +108,32 @@ async def delete_post(
     await db.delete(post)
     await db.commit()
     return
+
+@post_router.get("/work/{work_id}", response_model=List[PostOut])
+async def get_posts_for_work(work_id: int, db: Session = Depends(get_db)):
+    """
+    특정 작품(work_id)에 대한 모든 리뷰 게시물을 반환합니다.
+    """
+    stmt = (
+        select(Posts)
+        .where(Posts.work_id == work_id, Posts.post_type == 'review')
+        .order_by(Posts.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    posts = result.scalars().all()
+    return posts
+
+@post_router.get("/{post_id}", response_model=PostOut)
+async def get_post_detail(post_id: int, db: Session = Depends(get_db)):
+    """
+    특정 게시물의 상세 정보를 반환합니다.
+    """
+    # 게시물 정보와 함께 작성자 정보(user)를 미리 불러옵니다.
+    stmt = select(Posts).options(joinedload(Posts.user)).where(Posts.post_id == post_id)
+    result = await db.execute(stmt)
+    post = result.scalars().first()
+    
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+        
+    return post

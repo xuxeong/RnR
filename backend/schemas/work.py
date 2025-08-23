@@ -50,6 +50,8 @@ class WorkOut(BaseModel):
     author: Optional[str] = None
     ISBN: Optional[str] = None
     director: Optional[str] = None
+
+    user_rating: Optional[float]=None
     
     class Config:
         from_attributes = True

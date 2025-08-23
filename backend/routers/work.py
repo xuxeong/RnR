@@ -6,11 +6,12 @@ from sqlalchemy import select, or_
 from typing import List, Optional
 
 from database import get_db
-from models import Works, Books, Movies
+from models import Works, Books, Movies, Users, Rating
 from schemas.work import WorkCreate, WorkOut, WorkUpdate # WorkUpdate 스키마 추가
 from schemas.book import BookCreate, BookOut, BookUpdate # BookUpdate 스키마 추가
 from schemas.movie import MovieCreate, MovieOut, MovieUpdate # MovieUpdate 스키마 추가
 from schemas.genre import GenreOut
+from .user import get_optional_current_user
 
 work_router = APIRouter(prefix="/works", tags=["Works"])
 
@@ -50,7 +51,8 @@ async def read_works(
     # 페이지네이션을 위한 파라미터
     skip: int = 0,
     limit: int = 20,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[Users] = Depends(get_optional_current_user)
 ):
     # 쿼리에 genres도 함께 로드하도록 joinedload를 추가합니다.
     stmt = select(Works).options(
@@ -64,6 +66,18 @@ async def read_works(
     stmt = stmt.offset(skip).limit(limit)
     result = await db.execute(stmt)
     works = result.scalars().unique().all() # unique() 추가로 중복 방지
+
+    user_ratings = {}
+    if current_user:
+        work_ids = [work.work_id for work in works]
+        ratings_result = await db.execute(
+            select(Rating).where(
+                Rating.user_id == current_user.user_id,
+                Rating.work_id.in_(work_ids)
+            )
+        )
+        for r in ratings_result.scalars().all():
+            user_ratings[r.work_id] = r.rating
 
     results = []
     for work in works:
@@ -85,7 +99,8 @@ async def read_works(
             "author": getattr(work_detail, 'author', None),
             "ISBN": getattr(work_detail, 'ISBN', None),
             "director": getattr(work_detail, 'director', None),
-            "genres": work.genres # <- 스키마에 맞게 장르 리스트를 추가!
+            "genres": work.genres,
+            "user_rating": user_ratings.get(work.work_id)
         }
         results.append(work_data)
 
@@ -97,7 +112,8 @@ async def search_works(
     type: Optional[str] = Query(None, description="Filter by type: 'book' or 'movie'"),
     skip: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(20, ge=1, le=100, description="Number of items to return"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Optional[Users] = Depends(get_optional_current_user)
 ):
     # Works 테이블을 기준으로 Books와 Movies 테이블을 outerjoin 합니다.
     stmt = select(Works).options(
@@ -128,6 +144,18 @@ async def search_works(
     result = await db.execute(stmt)
     works = result.scalars().unique().all()
     
+    user_ratings = {}
+    if current_user:
+        work_ids = [work.work_id for work in works]
+        ratings_result = await db.execute(
+            select(Rating).where(
+                Rating.user_id == current_user.user_id,
+                Rating.work_id.in_(work_ids)
+            )
+        )
+        for r in ratings_result.scalars().all():
+            user_ratings[r.work_id] = r.rating
+
     # 결과 가공 로직 (이전과 동일)
     results = []
     for work in works:
@@ -142,7 +170,8 @@ async def search_works(
             "author": getattr(work_detail, 'author', None),
             "ISBN": getattr(work_detail, 'ISBN', None),
             "director": getattr(work_detail, 'director', None),
-            "genres": work.genres
+            "genres": work.genres,
+            "user_rating": user_ratings.get(work.work_id)
         }
         results.append(work_data)
         
@@ -150,16 +179,40 @@ async def search_works(
 
 # 특정 작품 상세 조회
 @work_router.get("/{work_id}", response_model=WorkOut)
-async def get_work_detail(work_id: int, db: Session = Depends(get_db)):
+async def read_work_detail(work_id: int, db: Session = Depends(get_db)):
     """
-    ID로 특정 작품의 상세 정보를 조회합니다.
+    특정 작품의 상세 정보를 반환합니다.
     """
-    stmt = select(Works).where(Works.work_id == work_id).options(joinedload(Works.book), joinedload(Works.movie))
+    stmt = (
+        select(Works)
+        .options(
+            joinedload(Works.book),
+            joinedload(Works.movie),
+            joinedload(Works.genres)
+        )
+        .where(Works.work_id == work_id)
+    )
     result = await db.execute(stmt)
-    work = result.scalars().first()
+    work = result.scalars().unique().first()
+
     if not work:
         raise HTTPException(status_code=404, detail="Work not found")
-    return work
+
+    # WorkOut 스키마에 맞게 결과 가공
+    work_detail = work.book if work.Type == 'book' else work.movie
+    if not work_detail:
+        raise HTTPException(status_code=404, detail="Work detail not found")
+
+    return {
+        "work_id": work.work_id, "Type": work.Type, "rating": work.rating,
+        "name": work_detail.name, "created_at": work_detail.created_at,
+        "publisher": work_detail.publisher, "cover_img": work_detail.cover_img,
+        "reward": work_detail.reward, "ai_summary": work_detail.ai_summary,
+        "author": getattr(work_detail, 'author', None),
+        "ISBN": getattr(work_detail, 'ISBN', None),
+        "director": getattr(work_detail, 'director', None),
+        "genres": work.genres
+    }
 
 # 작품 정보 수정 (책, 영화 통합)
 @work_router.patch("/{work_id}", response_model=WorkOut)

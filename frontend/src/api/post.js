@@ -87,3 +87,16 @@ export const deletePost = async (postId) => {
     throw error;
   }
 };
+
+/**
+ * 특정 작품에 대한 리뷰 목록 조회 API
+ */
+export const getPostsForWork = async (workId) => {
+  try {
+    const response = await axiosInstance.get(`/posts/work/${workId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`작품 리뷰 조회 실패 (Work ID: ${workId}):`, error.response?.data || error.message);
+    throw error;
+  }
+};

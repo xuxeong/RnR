@@ -1,12 +1,16 @@
 // src/components/StarRating/StarRating.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './StarRating.css'; // 별점 디자인을 위한 CSS 파일
 
-export default function StarRating({ workId, onRatingSubmitted }) {
-  const [rating, setRating] = useState(0); // 현재 선택된 별점
+export default function StarRating({ workId, onRatingSubmitted, initialRating }) {
+  const [rating, setRating] = useState(initialRating || 0); // 현재 선택된 별점
   const [hover, setHover] = useState(0); // 마우스가 올라간 위치의 별점
 
+  useEffect(() => {
+    setRating(initialRating || 0);
+  }, [initialRating]);
+  
   const handleSubmitRating = async (ratingValue) => {
     try {
       await onRatingSubmitted(workId, ratingValue);

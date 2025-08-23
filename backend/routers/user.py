@@ -1,55 +1,93 @@
-# routers/user.py
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-from sqlalchemy import or_
-from typing import List
+import os
+from typing import Optional
 from datetime import datetime, timedelta
 
-from database import get_db
-from models import Users, Profile
-from schemas.user import UserCreate, UserLogin, UserUpdate, UserOut
-
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from sqlalchemy import select, or_
+from jose import jwt, JWTError
 from passlib.context import CryptContext
-from jose import jwt
-from auth_utils import get_current_user
-import os
+
+from database import get_db
+from models import Users
+from schemas.user import UserCreate, UserLogin, UserUpdate, UserOut
 
 user_router = APIRouter(prefix="/users", tags=["Users"])
 
-# --- JWT 및 비밀번호 관련 설정 ---
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+# --- 1. 보안 관련 설정 및 변수 정의 ---
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "a_very_secret_key") # 기본값 추가
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# JWT 토큰 생성 함수
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/users/login", auto_error=False)
+
+
+# --- 2. 인증 관련 유틸리티 및 의존성 함수 정의 ---
+def create_access_token(data: dict):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# --- 사용자 관리 API ---
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> Users:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    stmt = select(Users).where(Users.email == username)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+    
+    if user is None:
+        raise credentials_exception
+    return user
 
-# 회원가입
+async def get_optional_current_user(
+    # oauth2_scheme -> oauth2_scheme_optional 로 변경
+    token: Optional[str] = Depends(oauth2_scheme_optional), 
+    db: Session = Depends(get_db)
+) -> Optional[Users]:
+    """
+    사용자가 로그인 상태이면 사용자 정보를, 아니면 None을 반환합니다.
+    """
+    # 토큰이 아예 없는 경우 (비로그인), 바로 None을 반환
+    if not token:
+        return None
+    
+    # 토큰이 있지만 유효하지 않은 경우를 대비해 try-except 사용
+    try:
+        user = await get_current_user(token=token, db=db)
+        return user
+    except HTTPException:
+        return None
+
+# --- 3. API 엔드포인트 정의 ---
 @user_router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
+    # ... (회원가입 로직은 이전과 동일, 잘 작동합니다)
     stmt = select(Users).where(Users.email == payload.email)
     result = await db.execute(stmt)
     if result.scalars().first():
         raise HTTPException(status_code=409, detail="Email already registered")
 
     hashed_password = pwd_context.hash(payload.pw)
-    
-    user_data = payload.model_dump(exclude={"pw"})
     new_user = Users(
-        **user_data,
+        **payload.model_dump(exclude={'pw'}),
         pw=hashed_password,
         created_at=datetime.now(),
         modify_at=datetime.now()
@@ -60,9 +98,9 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     await db.refresh(new_user)
     return new_user
 
-# 로그인
 @user_router.post("/login")
 async def login(payload: UserLogin, db: Session = Depends(get_db)):
+    # ... (로그인 로직은 이전과 동일, 잘 작동합니다)
     stmt = select(Users).where(or_(Users.email == payload.username, Users.login_id == payload.username))
     result = await db.execute(stmt)
     user = result.scalars().first()
@@ -70,12 +108,10 @@ async def login(payload: UserLogin, db: Session = Depends(get_db)):
     if not user or not pwd_context.verify(payload.pw, user.pw):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
+# ... (이하 내 정보 수정, 회원 탈퇴, 특정 사용자 조회 API는 기존 코드와 동일하게 유지)
 # 내 정보 조회 (인증 필요)
 @user_router.get("/me", response_model=UserOut)
 async def read_user_me(current_user: Users = Depends(get_current_user)):

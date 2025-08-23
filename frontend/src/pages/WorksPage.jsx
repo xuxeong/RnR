@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getWorks, searchWorks } from '../api/works';
 import StarRating from '../components/StarRating/StarRating';
 import { createOrUpdateRating } from '../api/ratings';
+import { Link } from 'react-router-dom';
 
 export default function WorksPage() {
   const [works, setWorks] = useState([]);
@@ -112,20 +113,24 @@ export default function WorksPage() {
       {works.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {works.map((work) => (
-            <div key={`${work.work_id}-${work.name}`} className="bg-white border rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition duration-300">
-              <img 
-                src={work.cover_img || `https://placehold.co/200x300/e0e0e0/555555?text=${work.Type === 'book' ? '책' : '영화'}`} 
-                alt={work.name} 
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <h3 className="text-xl font-semibold truncate mb-2">{work.name}</h3>
-                <p className="text-sm text-gray-600">
-                  {work.Type === 'book' ? '책' : '영화'}
-                </p>
-                <StarRating workId={work.work_id} onRatingSubmitted={handleRatingSubmitted} />
+            <Link to={`/works/${work.work_id}`} key={`${work.work_id}-${work.name}`}>
+              <div key={`${work.work_id}-${work.name}`} className="bg-white border rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition duration-300">
+                <img 
+                  src={work.cover_img || `https://placehold.co/200x300/e0e0e0/555555?text=${work.Type === 'book' ? '책' : '영화'}`} 
+                  alt={work.name} 
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="text-xl font-semibold truncate mb-2">{work.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {work.Type === 'book' ? '책' : '영화'}
+                  </p>
+                  <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <StarRating workId={work.work_id} onRatingSubmitted={handleRatingSubmitted} initialRating={work.user_rating} />
+                  </div>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
