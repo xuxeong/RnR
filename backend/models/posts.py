@@ -10,7 +10,7 @@ class Posts(Base):
     
     last_update_ip = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
-    modify_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    modify_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     
     post_type = Column(Enum("review", "general", "vote", name="post_type"), nullable=False)
     title = Column(String, nullable=False)

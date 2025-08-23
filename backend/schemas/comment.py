@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
+from .user import UserOut
 
 class CommentCreate(BaseModel):
-    post_id: int
-    user_id: int
     context: str
 
 class CommentOut(BaseModel):
@@ -15,5 +15,6 @@ class CommentOut(BaseModel):
     created_at: datetime
     modify_at: datetime
     lastupdate_ip: Optional[str] = None
+    user: UserOut
     class Config:
         from_attributes = True

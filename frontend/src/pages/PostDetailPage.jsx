@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPostDetail, toggleLikePost } from '../api/post';
+import { getComments, createComment } from '../api/comment';
 
 export default function PostDetailPage() {
   const { postId } = useParams();
   const [post, setPost] = useState(null);
+   const [comments, setComments] = useState([]); // 댓글 목록 state
+  const [newComment, setNewComment] = useState(""); // 새 댓글 입력 state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        setLoading(true);
-        const data = await getPostDetail(postId);
-        setPost(data);
-      } catch (err) {
-        setError('게시물을 불러오는 데 실패했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPost();
+  
+    const fetchPostAndComments = async () => {
+    try {
+      setLoading(true);
+      const [postData, commentsData] = await Promise.all([
+        getPostDetail(postId),
+        getComments(postId)
+      ]);
+      setPost(postData);
+      setComments(commentsData);
+    } catch (err) {
+      setError('게시물을 불러오는 데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+    
+    useEffect(() => {
+    fetchPostAndComments();
   }, [postId]);
 
   // 좋아요 버튼 클릭 핸들러 추가
@@ -32,6 +41,19 @@ export default function PostDetailPage() {
       alert('좋아요 상태가 변경되었습니다! (실제 반영은 새로고침 시 확인)');
     } catch (error) {
       alert('좋아요 처리에 실패했습니다.');
+    }
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    try {
+      const createdComment = await createComment(postId, newComment);
+      // 새 댓글을 기존 댓글 목록에 추가하여 즉시 반영
+      setComments([...comments, createdComment]);
+      setNewComment(""); // 입력창 비우기
+    } catch (error) {
+      alert('댓글 작성에 실패했습니다. 로그인했는지 확인해주세요.');
     }
   };
 
@@ -63,12 +85,33 @@ export default function PostDetailPage() {
           ❤️ 좋아요 ({post.like})
         </button>
       </div>
-      
-      {/* 댓글 영역 (추후 구현) */}
+
+      {/* 댓글 영역 */}
       <div className="mt-12">
-        <h2 className="text-2xl font-bold">댓글</h2>
-        <div className="mt-4 p-6 bg-gray-100 rounded-lg">
-          <p>여기에 댓글 기능이 추가될 예정입니다.</p>
+        <h2 className="text-2xl font-bold mb-4">댓글 ({comments.length})</h2>
+        {/* 댓글 작성 폼 */}
+        <form onSubmit={handleCommentSubmit} className="mb-6">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            rows="3"
+            placeholder="댓글을 입력하세요..."
+          ></textarea>
+          <button type="submit" className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            댓글 등록
+          </button>
+        </form>
+
+        {/* 댓글 목록 */}
+        <div className="space-y-4">
+          {comments.map(comment => (
+            <div key={comment.comment_id} className="p-4 bg-gray-50 rounded-lg border">
+              <p className="font-semibold">{comment.user?.profiles?.[0]?.nickname || `User ${comment.user_id}`}</p>
+              <p className="text-gray-700">{comment.context}</p>
+              <p className="text-xs text-gray-400 mt-1">{new Date(comment.created_at).toLocaleString()}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
