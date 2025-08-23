@@ -29,9 +29,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def run_all_recommendations():
     db = SessionLocal()
     try:
-        # --- 1. 데이터 로드 ---
+        # --- 1. 데이터 로드 (posts 테이블 추가) ---
         logging.info("Loading data from database...")
         ratings_df = pd.read_sql("SELECT user_id, work_id, rating FROM rating", db.bind)
+        # post_type이 'review'인 게시물만 가져옵니다.
+        posts_df = pd.read_sql("SELECT user_id, work_id, ai_emotion FROM posts WHERE post_type = 'review'", db.bind)
         works_genres_df = pd.read_sql("""
             SELECT w.work_id, g.label as genre_label 
             FROM works w 
@@ -46,7 +48,7 @@ def run_all_recommendations():
         works_df = works_genres_df.groupby('work_id')['genre_label'].apply(list).reset_index()
         works_df.rename(columns={'genre_label': 'genres'}, inplace=True)
         logging.info("✅ Data loaded and prepared successfully.")
-
+        
         # --- 2. CBF 모델 생성 (작품 유사도) ---
         logging.info("Creating Content-Based Filtering (CBF) model...")
         works_df['genres_str'] = works_df['genres'].apply(lambda x: ' '.join(x))
@@ -65,18 +67,26 @@ def run_all_recommendations():
         model_cf.fit(trainset)
         logging.info("✅ User-CF model for works trained.")
 
-        # --- 4. 하이브리드 작품 추천 목록 생성 ---
-        logging.info("Generating hybrid work recommendations...")
-        # ... (이전과 동일한 작품 추천 로직) ...
+        # --- 4. 하이브리드 작품 추천 목록 생성 (로직 수정) ---
+        logging.info("Generating hybrid work recommendations with AI sentiment...")
         all_recommendations = []
         high_rating_threshold = 4.0
         top_k_works = 20
 
         for user_id in tqdm(ratings_df['user_id'].unique(), desc="Generating work recommendations"):
+            # --- '좋아하는 작품' 판단 로직 수정 ---
+            # 1. 높은 평점을 준 작품 ID 목록
+            high_rated_work_ids = set(ratings_df[(ratings_df['user_id'] == user_id) & (ratings_df['rating'] >= high_rating_threshold)]['work_id'])
+            # 2. 긍정적인 리뷰를 남긴 작품 ID 목록
+            positive_review_work_ids = set(posts_df[(posts_df['user_id'] == user_id) & (posts_df['ai_emotion'] == 'positive')]['work_id'])
+            # 두 목록을 합쳐서 사용자가 '좋아하는' 작품 목록 최종 생성
+            liked_works = high_rated_work_ids.union(positive_review_work_ids)
+
             seen_works = ratings_df[ratings_df['user_id'] == user_id]['work_id'].tolist()
+            
+            # (CBF 추천) 좋아하는 작품(liked_works)과 유사한 작품 찾기
             cbf_recs = defaultdict(float)
-            high_rated_works = ratings_df[(ratings_df['user_id'] == user_id) & (ratings_df['rating'] >= high_rating_threshold)]['work_id']
-            for work_id in high_rated_works:
+            for work_id in liked_works:
                 if work_id in work_sim_df.index:
                     similar_works = work_sim_df[work_id].sort_values(ascending=False)[1:top_k_works+1]
                     for sim_work_id, score in similar_works.items():
