@@ -1,6 +1,7 @@
 from pydantic import BaseModel
-from typing import Optional
-from datetime import date, datetime
+from typing import Optional, List
+from datetime import date
+from .genre import GenreOut
 
 # 작품 생성/수정 시 공통으로 사용되는 필드를 정의하는 기본 스키마
 class WorkBase(BaseModel):
@@ -37,13 +38,18 @@ class WorkOut(BaseModel):
     work_id: int
     Type: str
     name: str
-    rating: Optional[float] = None
-    genre_id: int
     created_at: date
+    genres: List[GenreOut]
+
+    rating: Optional[float] = None
     publisher: Optional[str] = None
     cover_img: Optional[str] = None
     reward: Optional[str] = None
     ai_summary: Optional[str] = None
+
+    author: Optional[str] = None
+    ISBN: Optional[str] = None
+    director: Optional[str] = None
     
     class Config:
         from_attributes = True

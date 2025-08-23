@@ -1,0 +1,28 @@
+/* src/components/StarRating/StarRating.css */
+
+.star-rating {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.star-rating button {
+  background-color: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.star-rating .star {
+  font-size: 2rem;
+  transition: color 0.2s;
+}
+
+.star-rating .on .star {
+  color: #ffc107; /* 켜진 별 색상 */
+}
+
+.star-rating .off .star {
+  color: #e4e5e9; /* 꺼진 별 색상 */
+}

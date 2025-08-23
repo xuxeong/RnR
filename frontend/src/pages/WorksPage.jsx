@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { getWorks, getWorkDetail, searchWorks } from '../api/works';
 import { useAuth } from '../context/AuthContext'; // 로그아웃 기능을 위해 AuthContext 사용
+import StarRating from '../components/StarRating/StarRating';
+import { createOrUpdateRating } from '../api/ratings';
 
 export default function WorksPage() {
   const { logout } = useAuth(); // 로그아웃 함수 가져오기
@@ -52,6 +54,20 @@ export default function WorksPage() {
   const handleFilterChange = (e) => {
     setFilterType(e.target.value);
     fetchWorks(e.target.value, searchTerm); // 필터 변경 시 즉시 다시 불러오기
+  };
+
+  const handleRatingSubmitted = async (workId, rating) => {
+    try {
+      await createOrUpdateRating(workId, rating);
+      // 평점 제출 성공 후, 필요하다면 works 목록을 새로고침하여 평균 평점을 업데이트할 수 있습니다.
+      // fetchWorks(); 
+    } catch (error) {
+      // 에러는 StarRating 컴포넌트 내부에서 이미 alert로 처리했습니다.
+      console.error("Failed to submit rating from WorksPage");
+      // --- 이 부분을 추가해주세요 ---
+      // 잡은 에러를 다시 상위 컴포넌트로 던져줍니다.
+      throw error;
+    }
   };
 
   // 로딩 중일 때
@@ -128,6 +144,10 @@ export default function WorksPage() {
                   {work.Type === 'book' ? '책' : '영화'}
                   {work.rating ? ` | 평점: ${work.rating.toFixed(1)}` : ''}
                 </p>
+                <StarRating 
+                  workId={work.work_id} 
+                  onRatingSubmitted={handleRatingSubmitted} 
+                />
                 {/* 추가 정보 표시 (예: 작가/감독, 요약 등) */}
                 {/* <p className="text-sm text-gray-500 mt-2 line-clamp-2">{work.ai_summary || '요약 정보가 없습니다.'}</p> */}
               </div>

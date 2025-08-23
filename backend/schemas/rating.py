@@ -1,11 +1,13 @@
+# schemas/rating.py
+
 from pydantic import BaseModel
-from typing import Optional
 
 class RatingCreate(BaseModel):
-    user_id: int
     work_id: int
     rating: float
 
 class RatingOut(RatingCreate):
+    user_id: int
+
     class Config:
         from_attributes = True

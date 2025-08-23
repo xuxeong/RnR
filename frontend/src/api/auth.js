@@ -93,7 +93,11 @@ export const updateProfile = async (profileData) => {
   }
 };
 
-//사용자 계정 업데이트 API 호출
+/**
+ * 내 계정 정보 업데이트 API 호출
+ * @param {object} userData - 업데이트할 사용자 데이터 (UserUpdate 스키마)
+ * @returns {Promise<object>} - 업데이트된 사용자 정보
+ */
 export const updateUser = async (userData) => {
   try {
     const response = await axiosInstance.patch('/users/me', userData);
@@ -103,7 +107,6 @@ export const updateUser = async (userData) => {
     throw error;
   }
 };
-
 
 /**
  * 사용자 계정 비활성화 (탈퇴 유예) API 호출

@@ -84,22 +84,26 @@ async def read_user_me(current_user: Users = Depends(get_current_user)):
 # 내 정보 수정 (인증 필요)
 @user_router.patch("/me", response_model=UserOut)
 async def update_user_me(payload: UserUpdate, db: Session = Depends(get_db), current_user: Users = Depends(get_current_user)):
-    try:
-        for key, value in payload.model_dump(exclude_unset=True).items():
-            if key == "pw":
-                hashed_password = pwd_context.hash(value)
-                setattr(current_user, key, hashed_password)
-            else:
-                setattr(current_user, key, value)
-            print(f"Set attribute {key} to {getattr(current_user, key)}")
-        current_user.modify_at = datetime.now()
-        await db.commit()
-        await db.refresh(current_user)
-        return current_user
-    except Exception as e:
-        await db.rollback()
-        print(f"Error in update_user_me: {e}")
-        raise
+    # --- 비밀번호 변경 로직 ---
+    if payload.current_pw and payload.new_pw:
+        # 1. 현재 비밀번호가 맞는지 확인
+        if not pwd_context.verify(payload.current_pw, current_user.pw):
+            raise HTTPException(status_code=400, detail="현재 비밀번호가 일치하지 않습니다.")
+        
+        # 2. 새 비밀번호를 해싱하여 저장
+        hashed_password = pwd_context.hash(payload.new_pw)
+        setattr(current_user, 'pw', hashed_password)
+
+    # --- 일반 정보 수정 로직 ---
+    # 비밀번호 관련 필드를 제외한 나머지 정보를 업데이트합니다.
+    update_data = payload.model_dump(exclude_unset=True, exclude={'current_pw', 'new_pw'})
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+            
+    current_user.modify_at = datetime.now()
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
 
 
 # 회원 탈퇴 (인증 필요)

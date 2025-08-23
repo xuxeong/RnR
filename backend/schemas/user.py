@@ -28,12 +28,15 @@ class UserUpdate(BaseModel):
     login_id: Optional[str] = None
     name: Optional[str] = None
     phone: Optional[str] = None
-    pw: Optional[str] = None
+    current_pw: Optional[str] = None
+    new_pw: Optional[str] = None
 
 class UserOut(BaseModel):
     user_id: int
     name: str
     email: EmailStr
+    login_id: Optional[str] = None
+    phone: Optional[str] = None
     provider: str
     provider_id: Optional[str] = None
     created_at: datetime
