@@ -90,6 +90,63 @@ async def read_works(
         results.append(work_data)
 
     return results
+# 작품 검색
+@work_router.get("/search", response_model=List[WorkOut])
+async def search_works(
+    q: str = Query(..., min_length=1, description="Search query for work name"),
+    type: Optional[str] = Query(None, description="Filter by type: 'book' or 'movie'"),
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(20, ge=1, le=100, description="Number of items to return"),
+    db: Session = Depends(get_db)
+):
+    # Works 테이블을 기준으로 Books와 Movies 테이블을 outerjoin 합니다.
+    stmt = select(Works).options(
+        joinedload(Works.book),
+        joinedload(Works.movie),
+        joinedload(Works.genres)
+    ).outerjoin(
+        Books, Works.work_id == Books.work_id
+    ).outerjoin(
+        Movies, Works.work_id == Movies.work_id
+    )
+
+    # 검색어(q) 필터링: 책 이름 또는 영화 이름에 검색어가 포함된 경우를 찾습니다.
+    stmt = stmt.filter(
+        or_(
+            Books.name.ilike(f"%{q}%"),
+            Movies.name.ilike(f"%{q}%")
+        )
+    )
+
+    # 타입(type) 필터링
+    if type:
+        stmt = stmt.filter(Works.Type == type)
+
+    # 페이지네이션 적용
+    stmt = stmt.offset(skip).limit(limit)
+
+    result = await db.execute(stmt)
+    works = result.scalars().unique().all()
+    
+    # 결과 가공 로직 (이전과 동일)
+    results = []
+    for work in works:
+        work_detail = work.book if work.Type == 'book' else work.movie
+        if not work_detail: # 조인된 결과가 없을 수 있으므로 체크
+            continue
+        work_data = {
+            "work_id": work.work_id, "Type": work.Type, "rating": work.rating,
+            "name": work_detail.name, "created_at": work_detail.created_at,
+            "publisher": work_detail.publisher, "cover_img": work_detail.cover_img,
+            "reward": work_detail.reward, "ai_summary": work_detail.ai_summary,
+            "author": getattr(work_detail, 'author', None),
+            "ISBN": getattr(work_detail, 'ISBN', None),
+            "director": getattr(work_detail, 'director', None),
+            "genres": work.genres
+        }
+        results.append(work_data)
+        
+    return results
 
 # 특정 작품 상세 조회
 @work_router.get("/{work_id}", response_model=WorkOut)
@@ -135,29 +192,3 @@ def update_work(
     db.commit()
     db.refresh(work)
     return work
-
-# 작품 검색
-@work_router.get("/search", response_model=List[WorkOut])
-async def search_works(
-    q: str = Query(..., min_length=1),
-    type: Optional[str] = Query(None, regex="^(book|movie)$"),
-    db: Session = Depends(get_db)
-):
-    """
-    제목으로 작품을 검색합니다.
-    """
-    # Books와 Movies 테이블을 JOIN하여 각 테이블의 name 컬럼에서 검색합니다.
-    stmt = select(Works).join(Books, Works.work_id == Books.work_id, isouter=True)\
-                        .join(Movies, Works.work_id == Movies.work_id, isouter=True)\
-                        .options(joinedload(Works.book), joinedload(Works.movie))\
-                        .where(or_(
-                            Books.name.ilike(f"%{q}%"),
-                            Movies.name.ilike(f"%{q}%")
-                        ))
-
-    if type:
-        stmt = stmt.where(Works.Type == type)
-
-    result = await db.execute(stmt)
-    works = result.scalars().all()
-    return works

@@ -10,17 +10,16 @@ import axiosInstance from './axiosInstance';
  * @param {number} [limit=20] - 가져올 항목 수
  * @returns {Promise<Array<object>>} - 작품 목록 배열
  */
-export const getWorks = async (type = null, query = null, skip = 0, limit = 20) => {
+
+/**
+ * 작품 목록 조회 API (페이지네이션)
+ */
+export const getWorks = async (type = null, skip = 0, limit = 20) => {
   try {
-    // 기본 파라미터에 skip과 limit 추가
     const params = { skip, limit };
     if (type) params.type = type;
-    if (query) params.q = query;
-
-    // 검색 API와 일반 목록 조회 API를 분기 처리
-    const url = query ? '/works/search' : '/works';
     
-    const response = await axiosInstance.get(url, { params });
+    const response = await axiosInstance.get('/works', { params });
     return response.data;
   } catch (error) {
     console.error('작품 목록 조회 실패:', error.response?.data || error.message);
@@ -51,18 +50,20 @@ export const getWorkDetail = async (workId) => {
  * @param {string} [type] - 'book' 또는 'movie' (선택 사항)
  * @returns {Promise<Array<object>>} - 검색된 작품 목록
  */
-export const searchWorks = async (query, type = null) => {
-  try {
-    const params = { q: query };
-    if (type) {
-      params.type = type;
+export const searchWorks = async (query, type = null, skip = 0, limit = 20) => {
+    try {
+        if (!query || query.trim().length < 1) {
+          throw new Error("검색어는 최소 1글자 이상이어야 합니다.");
+        }  
+        const params = { q: query, skip, limit };
+        if (type) params.type = type;
+
+        const response = await axiosInstance.get('/works/search', { params });
+        return response.data;
+    } catch (error) {
+        console.error(`작품 검색 실패 (쿼리: ${query}):`, error.response?.data || error.message);
+        throw error;
     }
-    const response = await axiosInstance.get('/works/search', { params });
-    return response.data;
-  } catch (error) {
-    console.error(`작품 검색 실패 (쿼리: ${query}):`, error.response?.data || error.message);
-    throw error;
-  }
 };
 
 /**

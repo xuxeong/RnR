@@ -84,27 +84,30 @@ export default function CreatePostModal({ isOpen, onClose, onPostCreated }) {
       setError('리뷰할 작품을 선택해주세요.');
       return;
     }
+    // --- 추가: 선택된 작품에 장르 정보가 있는지 확인 ---
+    if (postType === 'review' && (!selectedWork.genres || selectedWork.genres.length === 0)) {
+        setError('선택된 작품에 장르 정보가 없어 리뷰를 작성할 수 없습니다.');
+        return;
+    }
     if (!title.trim() || !content.trim()) {
       setError('제목과 내용을 모두 입력해주세요.');
       return;
     }
 
-    // PostCreate 스키마에 맞게 데이터를 구성합니다.
-    // user_id는 백엔드에서 토큰을 통해 자동으로 처리하므로 보낼 필요가 없습니다.
     try {
       const postData = {
         title,
         content,
         post_type: postType,
-        // 글 종류에 따라 genre_id와 work_id를 다르게 설정
-        genre_id: postType === 'review' ? selectedWork.genre_id : genreId,
+        // --- 이 부분을 수정합니다 ---
+        // selectedWork.genre_id -> selectedWork.genres[0].genre_id
+        genre_id: postType === 'review' ? selectedWork.genres[0].genre_id : parseInt(genreId),
         work_id: postType === 'review' ? selectedWork.work_id : null,
       };
       
       await createPost(postData);
       alert('게시물이 성공적으로 등록되었습니다.');
-      handleClose(); // state 초기화 및 모달 닫기
-      // 게시물 목록 새로고침을 위해 부모 컴포넌트에 알림
+      handleClose(); 
       onPostCreated();
 
     } catch (err) {
