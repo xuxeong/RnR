@@ -47,6 +47,9 @@ def create_work(
 @work_router.get("", response_model=List[WorkOut])
 async def read_works(
     type: str = Query(None, description="Filter by type: 'book' or 'movie'"),
+    # 페이지네이션을 위한 파라미터
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db)
 ):
     # 쿼리에 genres도 함께 로드하도록 joinedload를 추가합니다.
@@ -58,6 +61,7 @@ async def read_works(
     if type:
         stmt = stmt.where(Works.Type == type)
 
+    stmt = stmt.offset(skip).limit(limit)
     result = await db.execute(stmt)
     works = result.scalars().unique().all() # unique() 추가로 중복 방지
 

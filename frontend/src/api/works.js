@@ -3,17 +3,24 @@
 import axiosInstance from './axiosInstance';
 
 /**
- * 작품 목록 조회 API 호출 (책 또는 영화 필터링 가능)
- * GET /works?type=book
- * GET /works?type=movie
- * GET /works
- * @param {string} [type] - 'book' 또는 'movie' (선택 사항)
+ * 작품 목록 조회 API 호출 (페이지네이션 추가)
+ * @param {string} [type] - 'book' 또는 'movie'
+ * @param {string} [query] - 검색어
+ * @param {number} [skip=0] - 건너뛸 항목 수
+ * @param {number} [limit=20] - 가져올 항목 수
  * @returns {Promise<Array<object>>} - 작품 목록 배열
  */
-export const getWorks = async (type = null) => {
+export const getWorks = async (type = null, query = null, skip = 0, limit = 20) => {
   try {
-    const params = type ? { type } : {};
-    const response = await axiosInstance.get('/works', { params });
+    // 기본 파라미터에 skip과 limit 추가
+    const params = { skip, limit };
+    if (type) params.type = type;
+    if (query) params.q = query;
+
+    // 검색 API와 일반 목록 조회 API를 분기 처리
+    const url = query ? '/works/search' : '/works';
+    
+    const response = await axiosInstance.get(url, { params });
     return response.data;
   } catch (error) {
     console.error('작품 목록 조회 실패:', error.response?.data || error.message);

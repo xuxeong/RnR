@@ -1,6 +1,6 @@
 // src/pages/WorksPage.jsx
 // 작품 목록을 조회하고 표시하는 페이지 컴포넌트입니다.
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getWorks, getWorkDetail, searchWorks } from '../api/works';
 import { useAuth } from '../context/AuthContext'; // 로그아웃 기능을 위해 AuthContext 사용
 import StarRating from '../components/StarRating/StarRating';
@@ -8,36 +8,46 @@ import { createOrUpdateRating } from '../api/ratings';
 
 export default function WorksPage() {
   const { logout } = useAuth(); // 로그아웃 함수 가져오기
-  const [works, setWorks] = useState([]);
+  const [works, setWorks] = useState([]); //현재 페이지 번호를 관리
+  const [hasMore, setHasMore] = useState(true); //더 불러올 데이터가 있는지 여부
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState(''); // 'book', 'movie', ''
 
+  const PAGE_SIZE = 20;
+
   // 작품 목록을 가져오는 함수
-  const fetchWorks = async (type = '', query = '') => {
+  // useCallback으로 함수 재생성을 방지합니다.
+  const fetchWorks = useCallback(async (currentType, currentQuery, currentPage) => {
     setLoading(true);
     setError(null);
     try {
-      let data;
-      if (query) {
-        data = await searchWorks(query, type); // 검색어가 있으면 검색 API 호출
+      const skip = currentPage * PAGE_SIZE;
+      const data = await getWorks(currentType, currentQuery, skip, PAGE_SIZE);
+
+      setWorks(prevWorks => (currentPage === 0 ? data : [...prevWorks, ...data]));
+      
+      if (data.length < PAGE_SIZE) {
+        setHasMore(false);
       } else {
-        data = await getWorks(type); // 없으면 전체 또는 타입별 목록 조회
+        setHasMore(true);
       }
-      setWorks(data);
+      setPage(currentPage);
+
     } catch (err) {
       setError('작품을 불러오는 데 실패했습니다.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // 컴포넌트 마운트 시 초기 작품 목록 로드
   useEffect(() => {
-    fetchWorks();
-  }, []);
+    fetchWorks(filterType, searchTerm, 0);
+  }, []); // 초기 로드는 한번만
 
   // 검색어 입력 핸들러
   const handleSearchChange = (e) => {
@@ -47,13 +57,22 @@ export default function WorksPage() {
   // 검색 버튼 클릭 또는 Enter 키 입력 시 검색 실행
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    fetchWorks(filterType, searchTerm);
+    setHasMore(true); // 새로운 검색 시작 시 더보기 버튼 활성화
+    fetchWorks(filterType, searchTerm, 0);
   };
 
   // 필터 타입 변경 핸들러
   const handleFilterChange = (e) => {
-    setFilterType(e.target.value);
-    fetchWorks(e.target.value, searchTerm); // 필터 변경 시 즉시 다시 불러오기
+    const newType = e.target.value;
+    setFilterType(newType);
+    setHasMore(true);
+    fetchWorks(newType, searchTerm, 0);
+  };
+
+  const handleLoadMore = () => {
+    if (hasMore && !loading) {
+      fetchWorks(filterType, searchTerm, page + 1);
+    }
   };
 
   const handleRatingSubmitted = async (workId, rating) => {
@@ -155,15 +174,19 @@ export default function WorksPage() {
           ))}
         </div>
       )}
-      
-      {/* 로그아웃 버튼 (임시) */}
-      <div className="text-center mt-10">
-        <button
-          onClick={logout}
-          className="px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition duration-200 shadow-md"
-        >
-          로그아웃
-        </button>
+      {/* 더 보기 버튼 및 로딩/에러 메시지 */}
+      <div className="text-center mt-8">
+        {loading && <p>로딩 중...</p>}
+        {error && <p className="text-red-600">{error}</p>}
+        {!loading && works.length === 0 && <p>표시할 작품이 없습니다.</p>}
+        {hasMore && !loading && works.length > 0 && (
+          <button
+            onClick={handleLoadMore}
+            className="px-6 py-3 bg-pinkBrown text-white rounded-lg font-semibold hover:bg-gray-700"
+          >
+            더 보기
+          </button>
+        )}
       </div>
     </div>
   );
