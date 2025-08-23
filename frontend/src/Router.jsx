@@ -9,6 +9,7 @@ import WorksPage from './pages/WorksPage';
 import WorkDetailPage from './pages/WorkDetailPage';
 import PostsPage from './pages/PostsPage'; // 메인 페이지로 사용할 컴포넌트
 import PostDetailPage from './pages/PostDetailPage';
+import LikesPage from './pages/LikesPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import RecommendPage from './pages/RecommendPage';
@@ -25,6 +26,7 @@ export default function Router() {
           {/* '/' 경로로 접속하면 기본으로 PostsPage를 보여줍니다. */}
           <Route index element={<PostsPage />} />
           <Route path="posts/:postId" element={<PostDetailPage />} />
+          <Route path="likes" element={<LikesPage />} />
           
           {/* '/profile' 경로로 접속하면 ProfilePage를 보여줍니다. */}
           <Route path="profile" element={<ProfilePage />} />

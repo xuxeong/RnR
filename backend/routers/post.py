@@ -7,7 +7,7 @@ from sqlalchemy import select
 from typing import List, Optional
 
 from database import get_db
-from models import Posts, Users
+from models import Posts, Users, Likes
 from schemas.post import PostCreate, PostUpdate, PostOut
 from auth_utils import get_current_user
 
@@ -137,3 +137,58 @@ async def get_post_detail(post_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Post not found")
         
     return post
+
+# 1. 좋아요 토글 API
+@post_router.post("/{post_id}/like", status_code=status.HTTP_204_NO_CONTENT)
+async def toggle_like_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    게시물에 대한 좋아요를 추가하거나 취소합니다 (토글).
+    """
+    # 먼저 게시물이 존재하는지 확인
+    post = await db.get(Posts, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    # 이미 좋아요를 눌렀는지 확인
+    like_stmt = select(Likes).where(
+        Likes.user_id == current_user.user_id,
+        Likes.post_id == post_id
+    )
+    result = await db.execute(like_stmt)
+    existing_like = result.scalars().first()
+
+    if existing_like:
+        # 이미 좋아요를 눌렀다면, 좋아요 취소 (삭제)
+        await db.delete(existing_like)
+        post.like -= 1 # 게시물의 좋아요 카운트 감소
+    else:
+        # 누르지 않았다면, 좋아요 추가 (생성)
+        new_like = Likes(user_id=current_user.user_id, post_id=post_id)
+        db.add(new_like)
+        post.like += 1 # 게시물의 좋아요 카운트 증가
+    
+    await db.commit()
+    return
+
+# 2. 내가 좋아요한 게시물 목록 API
+@post_router.get("/likes/me", response_model=List[PostOut])
+async def get_my_liked_posts(
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    현재 로그인한 사용자가 좋아요를 누른 모든 게시물 목록을 반환합니다.
+    """
+    stmt = (
+        select(Posts)
+        .join(Likes, Posts.post_id == Likes.post_id)
+        .where(Likes.user_id == current_user.user_id)
+        .order_by(Posts.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    liked_posts = result.scalars().all()
+    return liked_posts

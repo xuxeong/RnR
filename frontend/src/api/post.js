@@ -100,3 +100,29 @@ export const getPostsForWork = async (workId) => {
     throw error;
   }
 };
+
+/**
+ * 게시물 좋아요 토글 API
+ */
+export const toggleLikePost = async (postId) => {
+  try {
+    // 성공 시 별도의 데이터를 반환하지 않으므로 response를 받지 않아도 됩니다.
+    await axiosInstance.post(`/posts/${postId}/like`);
+  } catch (error) {
+    console.error(`좋아요 실패 (Post ID: ${postId}):`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * 내가 좋아요한 게시물 목록 조회 API
+ */
+export const getLikedPosts = async () => {
+  try {
+    const response = await axiosInstance.get('/posts/likes/me');
+    return response.data;
+  } catch (error) {
+    console.error('좋아요한 게시물 조회 실패:', error.response?.data || error.message);
+    throw error;
+  }
+};
