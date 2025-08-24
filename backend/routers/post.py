@@ -98,14 +98,23 @@ async def update_post(
     """
     자신이 작성한 게시물을 수정합니다.
     """
-    post = await db.get(Posts, post_id)
+    # options(joinedload(Posts.user))를 추가하여 사용자 정보를 함께 가져옵니다.
+    stmt = select(Posts).options(joinedload(Posts.user)).where(Posts.post_id == post_id)
+    result = await db.execute(stmt)
+    post = result.scalars().first()
+
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     if post.user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Not authorized to update this post")
 
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    # 받은 데이터로 게시물 내용 업데이트
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
         setattr(post, key, value)
+    
+    # 수정 시간 자동 업데이트
+    post.modify_at = datetime.now()
         
     await db.commit()
     await db.refresh(post)

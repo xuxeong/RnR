@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getPostDetail, toggleLikePost, deletePost } from '../api/post';
 import { getComments, createComment, deleteComment } from '../api/comment';
 import { useAuth } from '../context/AuthContext';
+import EditPostModal from '../components/EditPostModal/EditPostModal';
 
 export default function PostDetailPage() {
   const { postId } = useParams();
@@ -10,11 +11,11 @@ export default function PostDetailPage() {
   const { user } = useAuth(); // 현재 로그인한 사용자 정보
   
   const [post, setPost] = useState(null);
-   const [comments, setComments] = useState([]); // 댓글 목록 state
-  const [newComment, setNewComment] = useState(""); // 새 댓글 입력 state
+   const [comments, setComments] = useState([]); 
+  const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+const [isEditModalOpen, setIsEditModalOpen] = useState(false); // 수정 모달 상태
   
     const fetchPostAndComments = async () => {
     try {
@@ -88,6 +89,11 @@ export default function PostDetailPage() {
     }
   };
 
+  // 수정된 게시물 정보를 받아 state를 업데이트하는 함수
+  const handlePostUpdated = (updatedPost) => {
+    setPost(updatedPost);
+  };
+
   if (loading) return <div className="text-center p-10">게시물을 불러오는 중...</div>;
   if (error) return <div className="text-center p-10 text-red-500">{error}</div>;
   if (!post) return null;
@@ -100,12 +106,17 @@ export default function PostDetailPage() {
         <p className="text-md text-gray-500 mt-2">
           작성자: {post.user?.profile?.nickname || `User ${post.user_id}`} | 작성일: {new Date(post.created_at).toLocaleDateString()}
         </p>
-        {/* --- 게시물 작성자일 경우에만 삭제 버튼 표시 --- */}
           {user && user.user_id === post.user_id && (
-            <button onClick={handlePostDelete} className="text-sm text-red-500 hover:underline">
-              삭제
-            </button>
-          )}
+              <div className="flex space-x-2">
+                {/* --- 수정 버튼 추가 --- */}
+                <button onClick={() => setIsEditModalOpen(true)} className="text-sm text-blue-500 hover:underline">
+                  수정
+                </button>
+                <button onClick={handlePostDelete} className="text-sm text-red-500 hover:underline">
+                  삭제
+                </button>
+              </div>
+            )}
       </div>
       
       {/* 게시물 본문 */}
@@ -159,6 +170,13 @@ export default function PostDetailPage() {
           ))}
         </div>
       </div>
+      {/* --- 수정 모달 렌더링 --- */}
+      <EditPostModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        post={post}
+        onPostUpdated={handlePostUpdated}
+      />
     </div>
   );
 }
