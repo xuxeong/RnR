@@ -106,11 +106,11 @@ function ProfilePage() {
             {/* '계정 설정'으로 가는 링크 버튼 추가 */}
             <Link 
               to="/settings/account" 
-              className="px-4 py-2 bg-pink text-white rounded-md hover:bg-gray-700"
+              className="px-4 mr-2 py-2.5 bg-pink text-white rounded-md hover:bg-gray-700"
             >
               계정 설정
             </Link>
-            <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">프로필 수정</button>
+            <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-pinkBrown text-white rounded-md hover:bg-pink">프로필 수정</button>
           </div>
         </div>
       )}

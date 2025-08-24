@@ -128,7 +128,7 @@ const [isEditModalOpen, setIsEditModalOpen] = useState(false); // 수정 모달 
       <div className="mt-8 pt-4 border-t flex justify-center">
         <button
           onClick={handleLike}
-          className="bg-red-500 text-white font-bold py-2 px-4 rounded-full hover:bg-red-600 transition duration-300"
+          className="bg-red-400 text-white font-bold py-2 px-4 rounded-full hover:bg-red-600 transition duration-300"
         >
           ❤️ 좋아요 ({post.like})
         </button>
@@ -146,7 +146,7 @@ const [isEditModalOpen, setIsEditModalOpen] = useState(false); // 수정 모달 
             rows="3"
             placeholder="댓글을 입력하세요..."
           ></textarea>
-          <button type="submit" className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          <button type="submit" className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700">
             댓글 등록
           </button>
         </form>

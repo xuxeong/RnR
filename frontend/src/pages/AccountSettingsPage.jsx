@@ -98,7 +98,7 @@ export default function AccountSettingsPage() {
           </div>
         </div>
         <div className="text-right mt-4">
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">정보 저장</button>
+          <button type="submit" className="px-4 py-2 bg-pinkBrown text-white rounded-md hover:bg-pink">정보 저장</button>
         </div>
       </form>
       
@@ -122,7 +122,7 @@ export default function AccountSettingsPage() {
           </div>
         </div>
         <div className="text-right mt-4">
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">비밀번호 변경</button>
+          <button type="submit" className="px-4 py-2 bg-pinkBrown text-white rounded-md hover:bg-pink">비밀번호 변경</button>
         </div>
       </form>
       {/* 성공/실패 메시지를 보여줄 영역 추가 */}

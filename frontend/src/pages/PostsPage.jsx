@@ -80,21 +80,21 @@ export default function PostsPage() {
           <div className="inline-flex rounded-md shadow-sm" role="group">
             <button
               type="button"
-              className={`px-4 py-2 text-sm font-medium border border-gray-200 rounded-l-lg ${activeTab === 'popular' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
+              className={`bg-pink px-4 py-2 text-sm font-medium border border-gray-200 rounded-l-lg ${activeTab === 'popular' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
               onClick={() => handleTabClick('popular')}
             >
               popular
             </button>
             <button
               type="button"
-              className={`px-4 py-2 text-sm font-medium border-t border-b border-gray-200 ${activeTab === 'recent' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
+              className={`bg-pink px-4 py-2 text-sm font-medium border-t border-b border-gray-200 ${activeTab === 'recent' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
               onClick={() => handleTabClick('recent')}
             >
               recent
             </button>
             <button
               type="button"
-              className={`px-4 py-2 text-sm font-medium border border-gray-200 rounded-r-lg ${activeTab === 'feed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
+              className={`bg-pink px-4 py-2 text-sm font-medium border border-gray-200 rounded-r-lg ${activeTab === 'feed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
               onClick={() => handleTabClick('feed')}
             >
               feed

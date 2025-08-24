@@ -80,10 +80,10 @@ export default function WorkDetailPage() {
             <h2 className="text-2xl font-semibold text-gray-800">AI 요약</h2>
               {isSummaryLoading ? (
             // 로딩 중일 때: 회색 박스 + 깜빡임(pulse) 애니메이션
-            <div className="mt-2 p-4 bg-gray-100 rounded-lg animate-pulse">
-                <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-                <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+            <div className="mt-2 p-4 bg-pink rounded-lg animate-pulse">
+                <div className="h-4 bg-lightpink rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-lightpink rounded w-full mb-2"></div>
+                <div className="h-4 bg-lightpink rounded w-5/6"></div>
             </div>
             ) : (
             // 로딩 완료 후: 실제 요약 내용 표시

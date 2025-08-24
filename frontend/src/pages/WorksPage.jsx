@@ -99,7 +99,7 @@ export default function WorksPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-grow p-3 border border-gray-300 rounded-l-lg"
           />
-          <button type="submit" className="px-6 py-3 bg-blue-600 text-white rounded-r-lg font-semibold">
+          <button type="submit" className="px-6 py-3 bg-browny text-white rounded-r-lg font-semibold">
             검색
           </button>
         </form>
