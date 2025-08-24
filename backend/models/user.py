@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, Enum, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
+from .follow import Follow
 
 class Users(Base):
     __tablename__ = "users"
@@ -29,3 +30,10 @@ class Users(Base):
     recommend_users = relationship("Recommend_user", foreign_keys="[Recommend_user.user_id]", back_populates="user")
     recommend_targets = relationship("Recommend_user", foreign_keys="[Recommend_user.target_id]", back_populates="target")
     recommend_works = relationship("Recommend_work", back_populates="user")
+    following = relationship(
+        "Users",
+        secondary=Follow.__table__,
+        primaryjoin=user_id == Follow.follower_id,
+        secondaryjoin=user_id == Follow.followed_id,
+        backref="followers"
+    )

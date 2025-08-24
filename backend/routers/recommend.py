@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
-from typing import List
+from typing import List, Optional
 
 from database import get_db
-from models import Recommend_work, Recommend_user, User_interest, Users, Works
+from models import Recommend_work, Recommend_user, User_interest, Users, Works, Follow
 from schemas.recommend import RecommendUserOut
 from schemas.work import WorkOut
 from schemas.genre import GenreOut
@@ -22,8 +22,6 @@ async def get_work_recommendations(
     stmt = (
         select(Recommend_work)
         .options(
-            # Recommend_work와 Work를 조인하고,
-            # Work와 관련된 book, movie, genres를 각각 로드합니다.
             joinedload(Recommend_work.work).joinedload(Works.book),
             joinedload(Recommend_work.work).joinedload(Works.movie),
             joinedload(Recommend_work.work).subqueryload(Works.genres)
@@ -33,9 +31,8 @@ async def get_work_recommendations(
         .limit(20)
     )
     result = await db.execute(stmt)
-    recommendations = result.scalars().all()
+    recommendations = result.scalars().unique().all() # .unique() 추가
     
-    # WorkOut 스키마에 맞게 결과 가공
     response_data = []
     for rec in recommendations:
         if rec.work:
@@ -70,6 +67,10 @@ async def get_user_recommendations(
     result = await db.execute(stmt)
     recommendations = result.scalars().unique().all()
 
+    following_stmt = select(Follow.followed_id).where(Follow.follower_id == current_user.user_id)
+    following_result = await db.execute(following_stmt)
+    following_ids = set(following_result.scalars().all())
+
     response_data = []
     for rec in recommendations:
         if rec.target:
@@ -78,7 +79,8 @@ async def get_user_recommendations(
                 "target_id": rec.target.user_id,
                 "score": rec.score,
                 "name": rec.target.name,
-                "profile": profile_data 
+                "profile": profile_data,
+                "is_followed": rec.target.user_id in following_ids
             })
     return response_data
 

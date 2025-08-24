@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getRecommendedWorks, getSimilarUsers } from '../api/recommend';
+import { toggleFollowUser } from '../api/follow';
 import WorkCard from '../components/WorkCard/WorkCard';
 
 export default function RecommendPage() {
@@ -27,6 +28,22 @@ export default function RecommendPage() {
     };
     fetchRecommendations();
   }, []);
+
+  // 팔로우 버튼 클릭 핸들러
+  const handleFollow = async (userId) => {
+    try {
+      // API로부터 최신 팔로우 상태를 받아옵니다.
+      const { is_followed } = await toggleFollowUser(userId);
+      // 받은 최신 상태로 화면을 업데이트합니다.
+      setUsers(users.map(user => 
+        user.target_id === userId 
+          ? { ...user, is_followed: is_followed }
+          : user
+      ));
+    } catch (error) {
+      alert('팔로우 처리에 실패했습니다.');
+    }
+  };
 
   if (loading) return <div className="text-center p-10">추천 정보를 불러오는 중...</div>;
   if (error) return <div className="text-center p-10 text-red-500">{error}</div>;
@@ -62,6 +79,13 @@ export default function RecommendPage() {
                 </div>
                 <p className="mt-2 font-semibold">{user.profile?.nickname || user.name}</p>
                 <p className="text-sm text-gray-500">유사도: {(user.score * 100).toFixed(0)}%</p>
+                {/* --- 팔로우 버튼 추가 --- */}
+                <button 
+                  onClick={() => handleFollow(user.target_id)}
+                  className="mt-4 px-4 py-2 text-sm font-semibold text-white bg-green-500 rounded-lg hover:bg-green-600"
+                >
+                  {user.is_followed ? 'Unfollow' : 'Follow'}
+                </button>
               </div>
             ))}
           </div>

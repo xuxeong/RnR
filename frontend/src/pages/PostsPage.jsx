@@ -22,6 +22,13 @@ export default function PostsPage() {
   
   // 게시물 데이터를 가져오는 함수
   const fetchPosts = async () => {
+    // --- 'Feed' 탭인데 비로그인 상태이면 API 호출을 막습니다. ---
+    if (activeTab === 'feed' && !isAuthenticated) {
+      setPosts([]); // 게시물 목록을 비웁니다.
+      setLoading(false);
+      return; // 함수를 여기서 종료
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -38,7 +45,7 @@ export default function PostsPage() {
 
   useEffect(() => {
     fetchPosts();
-  }, [activeTab]);
+  }, [activeTab, isAuthenticated]);
 
   // 글이 성공적으로 생성되었을 때 호출될 함수
   const handlePostCreated = () => {
@@ -88,7 +95,7 @@ export default function PostsPage() {
             <button
               type="button"
               className={`px-4 py-2 text-sm font-medium border border-gray-200 rounded-r-lg ${activeTab === 'feed' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
-              onClick={() => setActiveTab('feed')}
+              onClick={() => handleTabClick('feed')}
             >
               feed
             </button>
@@ -105,14 +112,17 @@ export default function PostsPage() {
           )}
         </div>
 
-        {/* 게시물 목록 */}
-         {posts.length === 0 && !loading ? (
+        {/* --- 게시물 목록 렌더링 부분을 하나로 통합 --- */}
+        {activeTab === 'feed' && !isAuthenticated ? (
+          <div className="text-center text-gray-500 py-20">
+            <p className="text-xl">로그인이 필요한 기능입니다.</p>
+            <p className="mt-2">친구들의 소식을 보려면 로그인해주세요!</p>
+          </div>
+        ) : posts.length === 0 && !loading ? (
           <div className="text-center text-gray-500 py-20">
             <p className="text-xl">아직 게시물이 없습니다.</p>
-            <p className="mt-2">첫 글을 작성해보세요!</p>
           </div>
         ) : (
-          // 게시물 목록을 PostCard를 이용해 그리드 형태로 표시
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {posts.map((post) => (
               <PostCard key={post.post_id} post={post} />

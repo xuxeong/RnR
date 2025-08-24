@@ -11,7 +11,16 @@ import axiosInstance from './axiosInstance';
  */
 export const getPosts = async ({ sort = 'recent', type = null, workId = null } = {}) => {
   try {
-    const params = { sort, timestamp: new Date().getTime(), };
+    // 'feed' 탭을 위한 별도 API 호출
+    if (sort === 'feed') {
+      const response = await axiosInstance.get('/posts/feed');
+      return response.data;
+    }
+
+    const params = { 
+      sort,
+      timestamp: new Date().getTime(),
+    };
     if (type) params.type = type;
     if (workId) params.work_id = workId;
     

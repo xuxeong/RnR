@@ -12,6 +12,7 @@ class RecommendUserOut(BaseModel):
     score: float
     name: str
     profile: Optional[RecommendedUserProfile] = None
+    is_followed: bool = False
 
     class Config:
         from_attributes = True

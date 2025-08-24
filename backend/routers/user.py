@@ -10,8 +10,9 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 from database import get_db
-from models import Users
+from models import Users, Follow
 from schemas.user import UserCreate, UserLogin, UserUpdate, UserOut
+from schemas.follow import FollowStatus
 
 user_router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -156,3 +157,40 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(404, "User not found")
     return user
+
+# 1. 팔로우/언팔로우 토글 API
+@user_router.post("/{user_id}/follow", response_model=FollowStatus, status_code=status.HTTP_200_OK)
+async def toggle_follow_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    다른 사용자를 팔로우하거나 언팔로우합니다 (토글).
+    """
+    if user_id == current_user.user_id:
+        raise HTTPException(status_code=400, detail="Cannot follow yourself")
+
+    target_user = await db.get(Users, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User to follow not found")
+
+    # 이미 팔로우하고 있는지 확인
+    follow_stmt = select(Follow).where(
+        Follow.follower_id == current_user.user_id,
+        Follow.followed_id == user_id
+    )
+    result = await db.execute(follow_stmt)
+    existing_follow = result.scalars().first()
+
+    is_followed_after_toggle = False
+    if existing_follow:
+        await db.delete(existing_follow)
+        is_followed_after_toggle = False
+    else:
+        new_follow = Follow(follower_id=current_user.user_id, followed_id=user_id)
+        db.add(new_follow)
+        is_followed_after_toggle = True
+    
+    await db.commit()
+    return {"is_followed": is_followed_after_toggle}

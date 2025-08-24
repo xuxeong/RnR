@@ -7,7 +7,7 @@ from sqlalchemy import select, desc
 from typing import List, Optional
 
 from database import get_db
-from models import Posts, Users, Likes
+from models import Posts, Users, Likes, Follow
 from schemas.post import PostCreate, PostUpdate, PostOut
 from auth_utils import get_current_user
 
@@ -35,6 +35,7 @@ async def list_posts(
     posts = result.scalars().all()
     return posts
 
+# 1. My Feed API (내가 쓴 글)
 @post_router.get("/my-feed", response_model=List[PostOut])
 async def get_my_posts(
     db: Session = Depends(get_db),
@@ -52,6 +53,40 @@ async def get_my_posts(
     result = await db.execute(stmt)
     posts = result.scalars().all()
     return posts
+
+# 2. Community 'Feed' Tab API (팔로우한 사용자 글)
+@post_router.get("/feed", response_model=List[PostOut])
+async def get_my_feed(
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    현재 로그인한 사용자가 팔로우하는 모든 사용자의 게시물 목록 (피드)을 반환합니다.
+    """
+    # 1. 내가 팔로우하는 모든 사용자의 ID 목록을 가져옵니다.
+    following_users_stmt = select(Follow.followed_id).where(Follow.follower_id == current_user.user_id)
+    result = await db.execute(following_users_stmt)
+    following_ids = result.scalars().all()
+
+    # --- 여기에 현재 사용자 ID를 추가합니다 ---
+    ids_to_fetch = following_ids + [current_user.user_id]
+    # 중복을 제거할 수도 있습니다 (선택 사항)
+    # ids_to_fetch = list(set(following_ids + [current_user.user_id]))
+
+    if not ids_to_fetch:
+        return []
+
+    # 2. 해당 ID들이 작성한 모든 게시물을 최신순으로 가져옵니다.
+    feed_stmt = (
+        select(Posts)
+        .options(joinedload(Posts.user))
+        .where(Posts.user_id.in_(ids_to_fetch))
+        .order_by(desc(Posts.created_at))
+    )
+    result = await db.execute(feed_stmt)
+    feed_posts = result.scalars().all()
+    
+    return feed_posts
 
 # 새 게시물 생성
 @post_router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)

@@ -12,3 +12,4 @@ from .recommend_user import Recommend_user
 from .recommend_work import Recommend_work
 from .user_interest import User_interest
 from .work_genere import work_genre_association
+from .follow import Follow
