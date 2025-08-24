@@ -13,6 +13,7 @@ import LikesPage from './pages/LikesPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import RecommendPage from './pages/RecommendPage';
+import CommunityPage from './pages/Community';
 
 export default function Router() {
   return (
@@ -40,6 +41,8 @@ export default function Router() {
           
           {/* Recommend 페이지 경로 추가 */}
           <Route path="recommend" element={<RecommendPage />} />
+
+          <Route path="community" element={<CommunityPage/>}/>
           
         </Route>
       </Routes>
