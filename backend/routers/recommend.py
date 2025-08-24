@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
 from typing import List, Optional
+import subprocess
+import sys
 
 from database import get_db
 from models import Recommend_work, Recommend_user, User_interest, Users, Works, Follow
@@ -100,3 +102,25 @@ async def get_user_interest_genres(
     interests = result.scalars().all()
     
     return [interest.genre for interest in interests if interest.genre]
+
+@recommend_router.post("/run-update", status_code=status.HTTP_202_ACCEPTED)
+async def run_recommendation_update(
+    current_user: Users = Depends(get_current_user) # 관리자만 실행하게 하려면 권한 체크 로직 추가
+):
+    """
+    백그라운드에서 추천 알고리즘 스크립트(run_recommendation.py)를 실행합니다.
+    """
+    try:
+        # 현재 파이썬 실행 파일의 경로를 가져옵니다.
+        python_executable = sys.executable
+        # run_recommendation.py 스크립트의 경로를 지정합니다.
+        # 이 파일은 backend 폴더 바로 아래에 있어야 합니다.
+        script_path = "run_recommendation.py"
+        
+        # 비동기적으로 스크립트를 실행하고, 서버는 즉시 응답합니다.
+        # Popen을 사용하여 새로운 프로세스를 시작하고 기다리지 않습니다.
+        subprocess.Popen([python_executable, script_path])
+        
+        return {"message": "Recommendation update process started successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

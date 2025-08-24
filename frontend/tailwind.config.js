@@ -19,6 +19,7 @@ export default {
         lightPink: '#FEEEEE',
         light: '#F9F1F1',
         browny: '#785D5D',
+        skyblue: '#87CEFA',
 
       },
       fontFamily: {

@@ -38,3 +38,16 @@ export const getMyInterests = async () => {
       throw error;
     }
   };
+
+  /**
+ * 추천 알고리즘 업데이트를 수동으로 실행하는 API
+ */
+export const runRecommendationUpdate = async () => {
+  try {
+    const response = await axiosInstance.post('/recommend/run-update');
+    return response.data;
+  } catch (error) {
+    console.error('추천 업데이트 실행 실패:', error.response?.data || error.message);
+    throw error;
+  }
+};

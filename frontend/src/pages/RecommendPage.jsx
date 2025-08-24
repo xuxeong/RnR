@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getRecommendedWorks, getSimilarUsers } from '../api/recommend';
+import { getRecommendedWorks, getSimilarUsers, runRecommendationUpdate } from '../api/recommend';
 import { toggleFollowUser } from '../api/follow';
 import WorkCard from '../components/WorkCard/WorkCard';
 
@@ -8,6 +8,7 @@ export default function RecommendPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -45,11 +46,39 @@ export default function RecommendPage() {
     }
   };
 
+  // --- 추천 업데이트 버튼 클릭 핸들러 ---
+  const handleUpdateClick = async () => {
+    if (!window.confirm('추천 목록을 업데이트 하시겠습니까? 시간이 다소 걸릴 수 있습니다.')) {
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      await runRecommendationUpdate();
+      alert('추천 목록 업데이트가 시작되었습니다! 잠시 후 페이지를 새로고침하여 확인해주세요.');
+    } catch (err) {
+      alert('추천 목록 업데이트에 실패했습니다.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   if (loading) return <div className="text-center p-10">추천 정보를 불러오는 중...</div>;
   if (error) return <div className="text-center p-10 text-red-500">{error}</div>;
 
   return (
     <div className="container mx-auto p-6">
+      {/* --- 페이지 상단에 업데이트 버튼 추가 --- */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">추천</h1>
+        <button
+          onClick={handleUpdateClick}
+          disabled={isUpdating}
+          className="px-4 py-2 bg-skyblue text-white font-semibold rounded-lg shadow-md hover:bg-blue-500 disabled:bg-gray-400"
+        >
+          {isUpdating ? '업데이트 중...' : '추천 목록 새로고침'}
+        </button>
+      </div>
+
       {/* 나를 위한 맞춤 추천 작품 */}
       <section>
         <h2 className="text-3xl font-bold mb-6">회원님을 위한 맞춤 추천 작품</h2>

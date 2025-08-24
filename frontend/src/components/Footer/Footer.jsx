@@ -4,8 +4,8 @@ import React from 'react';
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-white p-4 mt-8 shadow-inner">
-      <div className="container mx-auto text-center text-gray-400">
+    <footer className="bg-lightPink text-white p-4 mt-8 shadow-inner">
+      <div className="container mx-auto text-center text-pinkBrown">
         <p>&copy; 2025 R&R (Reel & Read). All rights reserved.</p>
         <p className="text-sm mt-2">책과 영화를 사랑하는 당신을 위한 커뮤니티</p>
       </div>
