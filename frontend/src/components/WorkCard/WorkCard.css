@@ -1,0 +1,40 @@
+/* PostCard.css의 내용을 그대로 복사해오거나 아래 코드를 사용합니다. */
+.work-card {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+  background-color: #fff;
+}
+.work-card:hover {
+  transform: translateY(-5px);
+}
+.work-card-image-wrapper {
+  width: 100%;
+  padding-top: 150%; /* 2:3 비율 */
+  position: relative;
+}
+.work-card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.work-card-content {
+  padding: 16px;
+}
+.work-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.work-card-author {
+  font-size: 0.9rem;
+  color: #666;
+}

@@ -11,9 +11,15 @@ export default function PostsPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('recent');
+  const [activeTab, setActiveTab] = useState(localStorage.getItem('lastTab') || 'recent');
   const [isModalOpen, setIsModalOpen] = useState(false); // 모달 상태 추가
 
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    // 탭을 클릭할 때마다 localStorage에 'lastTab'으로 저장
+    localStorage.setItem('lastTab', tab);
+  };
+  
   // 게시물 데이터를 가져오는 함수
   const fetchPosts = async () => {
     setLoading(true);
@@ -68,14 +74,14 @@ export default function PostsPage() {
             <button
               type="button"
               className={`px-4 py-2 text-sm font-medium border border-gray-200 rounded-l-lg ${activeTab === 'popular' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
-              onClick={() => setActiveTab('popular')}
+              onClick={() => handleTabClick('popular')}
             >
               popular
             </button>
             <button
               type="button"
               className={`px-4 py-2 text-sm font-medium border-t border-b border-gray-200 ${activeTab === 'recent' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}
-              onClick={() => setActiveTab('recent')}
+              onClick={() => handleTabClick('recent')}
             >
               recent
             </button>

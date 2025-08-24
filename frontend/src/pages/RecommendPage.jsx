@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getRecommendedWorks, getSimilarUsers } from '../api/recommend';
-// PostCard를 재활용하여 작품을 표시합니다.
-import PostCard from '../components/PostCard/PostCard'; 
+import WorkCard from '../components/WorkCard/WorkCard';
 
 export default function RecommendPage() {
   const [works, setWorks] = useState([]);
@@ -41,7 +40,7 @@ export default function RecommendPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {works.map(work => (
               // PostCard와 형식이 비슷하므로, work 객체를 post처럼 전달해 재활용
-              <PostCard key={work.work_id} post={{ title: work.name, user_id: work.Type, img: work.cover_img }} />
+              <WorkCard key={work.work_id} work={work} />
             ))}
           </div>
         ) : (
