@@ -25,3 +25,15 @@ export const createComment = async (postId, context) => {
     throw error;
   }
 };
+
+/**
+ * 댓글 삭제
+ */
+export const deleteComment = async (commentId) => {
+    try {
+      await axiosInstance.delete(`/comments/${commentId}`);
+    } catch (error) {
+      console.error(`댓글 삭제 실패 (ID: ${commentId}):`, error.response?.data || error.message);
+      throw error;
+    }
+  };

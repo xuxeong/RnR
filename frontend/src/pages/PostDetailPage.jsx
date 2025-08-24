@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { getPostDetail, toggleLikePost } from '../api/post';
-import { getComments, createComment } from '../api/comment';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getPostDetail, toggleLikePost, deletePost } from '../api/post';
+import { getComments, createComment, deleteComment } from '../api/comment';
+import { useAuth } from '../context/AuthContext';
 
 export default function PostDetailPage() {
   const { postId } = useParams();
+  const navigate = useNavigate(); // 페이지 이동을 위한 navigate 훅
+  const { user } = useAuth(); // 현재 로그인한 사용자 정보
+  
   const [post, setPost] = useState(null);
    const [comments, setComments] = useState([]); // 댓글 목록 state
   const [newComment, setNewComment] = useState(""); // 새 댓글 입력 state
@@ -31,6 +35,33 @@ export default function PostDetailPage() {
     useEffect(() => {
     fetchPostAndComments();
   }, [postId]);
+
+  // --- 게시물 삭제 핸들러 추가 ---
+  const handlePostDelete = async () => {
+    if (window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) {
+      try {
+        await deletePost(post.post_id);
+        alert('게시물이 삭제되었습니다.');
+        navigate('/community'); // 삭제 후 커뮤니티 목록으로 이동
+      } catch (error) {
+        alert('게시물 삭제에 실패했습니다.');
+      }
+    }
+  };
+
+  // --- 댓글 삭제 핸들러 추가 ---
+  const handleCommentDelete = async (commentId) => {
+    if (window.confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
+      try {
+        await deleteComment(commentId);
+        // 화면에서 즉시 반영되도록 state에서 해당 댓글 제거
+        setComments(comments.filter(comment => comment.comment_id !== commentId));
+        alert('댓글이 삭제되었습니다.');
+      } catch (error) {
+        alert('댓글 삭제에 실패했습니다.');
+      }
+    }
+  };
 
   // 좋아요 버튼 클릭 핸들러 추가
   const handleLike = async () => {
@@ -69,6 +100,12 @@ export default function PostDetailPage() {
         <p className="text-md text-gray-500 mt-2">
           작성자: {post.user?.profile?.nickname || `User ${post.user_id}`} | 작성일: {new Date(post.created_at).toLocaleDateString()}
         </p>
+        {/* --- 게시물 작성자일 경우에만 삭제 버튼 표시 --- */}
+          {user && user.user_id === post.user_id && (
+            <button onClick={handlePostDelete} className="text-sm text-red-500 hover:underline">
+              삭제
+            </button>
+          )}
       </div>
       
       {/* 게시물 본문 */}
@@ -107,7 +144,15 @@ export default function PostDetailPage() {
         <div className="space-y-4">
           {comments.map(comment => (
             <div key={comment.comment_id} className="p-4 bg-gray-50 rounded-lg border">
-              <p className="font-semibold">{comment.user?.profiles?.[0]?.nickname || `User ${comment.user_id}`}</p>
+              <div className="flex justify-between items-center">
+                <p className="font-semibold">{comment.user?.profiles?.[0]?.nickname || `User ${comment.user_id}`}</p>
+                {/* --- 댓글 작성자일 경우에만 삭제 버튼 표시 --- */}
+                {user && user.user_id === comment.user_id && (
+                  <button onClick={() => handleCommentDelete(comment.comment_id)} className="text-xs text-red-500 hover:underline">
+                    삭제
+                  </button>
+                )}
+              </div>
               <p className="text-gray-700">{comment.context}</p>
               <p className="text-xs text-gray-400 mt-1">{new Date(comment.created_at).toLocaleString()}</p>
             </div>

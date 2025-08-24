@@ -57,3 +57,24 @@ async def create_comment_for_post(
     final_comment = result.scalars().unique().first()
 
     return final_comment
+
+@comment_router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    comment = await db.get(Comment, comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comment.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+        
+    # 게시물의 댓글 수 감소
+    post = await db.get(Posts, comment.post_id)
+    if post:
+        post.comment -= 1
+        
+    await db.delete(comment)
+    await db.commit()
+    return

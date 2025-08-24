@@ -114,19 +114,16 @@ async def update_post(
 # 게시물 삭제
 @post_router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
-    post_id: int, 
-    db: Session = Depends(get_db), 
+    post_id: int,
+    db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user)
 ):
-    """
-    자신이 작성한 게시물을 삭제합니다.
-    """
     post = await db.get(Posts, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     if post.user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Not authorized to delete this post")
-        
+    
     await db.delete(post)
     await db.commit()
     return

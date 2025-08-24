@@ -28,5 +28,5 @@ class Posts(Base):
     user = relationship("Users", back_populates="posts")
     genre = relationship("Genre", back_populates="posts")
     work = relationship("Works", back_populates="posts")
-    comments = relationship("Comment", back_populates="post")
-    likes = relationship("Likes", back_populates="post")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    likes = relationship("Likes", back_populates="post", cascade="all, delete-orphan")
