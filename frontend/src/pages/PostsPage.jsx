@@ -11,7 +11,7 @@ export default function PostsPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('popular');
+  const [activeTab, setActiveTab] = useState('recent');
   const [isModalOpen, setIsModalOpen] = useState(false); // 모달 상태 추가
 
   // 게시물 데이터를 가져오는 함수
@@ -19,7 +19,8 @@ export default function PostsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getPosts();
+      // activeTab 값을 sort라는 이름으로 명확하게 전달합니다.
+      const data = await getPosts({ sort: activeTab });
       setPosts(data);
     } catch (err) {
       setError('게시물을 불러오는 데 실패했습니다.');

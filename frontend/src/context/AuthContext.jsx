@@ -2,6 +2,7 @@
 // React Context를 사용하여 사용자 인증 상태를 전역적으로 관리합니다.
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getCurrentUser, login as authLogin } from '../api/auth'; // auth.js에서 login 함수를 authLogin으로 별칭 지정
+import { useNavigate } from 'react-router-dom';
 
 // AuthContext 생성
 const AuthContext = createContext(null);
@@ -11,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // 인증 상태
   const [user, setUser] = useState(null); // 사용자 정보
   const [isLoading, setIsLoading] = useState(true); // 로딩 상태
+  const navigate = useNavigate();
 
   // 컴포넌트 마운트 시 사용자 인증 상태 확인
   useEffect(() => {
@@ -58,6 +60,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('accessToken'); // 토큰 삭제
     setIsAuthenticated(false);
     setUser(null);
+    navigate('/');
   };
 
   return (

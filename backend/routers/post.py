@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from datetime import datetime
-from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select, desc
 from typing import List, Optional
 
 from database import get_db
@@ -16,17 +16,39 @@ post_router = APIRouter(prefix="/posts", tags=["Posts"])
 # 게시물 목록 조회
 @post_router.get("", response_model=List[PostOut])
 async def list_posts(
-    db: Session = Depends(get_db),
-    # 쿼리 파라미터로 post_type을 받을 수 있도록 추가
-    post_type: Optional[str] = Query(None, enum=["review", "general", "vote"])
+    sort: Optional[str] = Query("recent", description="Sort by 'recent' or 'popular'"),
+    db: Session = Depends(get_db)
 ):
     """
-    모든 게시물을 조회합니다. post_type으로 필터링할 수 있습니다.
+    모든 게시물 목록을 반환합니다. 최신순(recent) 또는 인기순(popular)으로 정렬할 수 있습니다.
     """
-    stmt = select(Posts)
-    if post_type:
-        stmt = stmt.where(Posts.post_type == post_type)
+    query = select(Posts).options(joinedload(Posts.user))
     
+    if sort == "popular":
+        # 인기순 (좋아요 많은 순)
+        query = query.order_by(desc(Posts.like))
+    else:
+        # 최신순 (기본값)
+        query = query.order_by(desc(Posts.created_at))
+        
+    result = await db.execute(query)
+    posts = result.scalars().all()
+    return posts
+
+@post_router.get("/my-feed", response_model=List[PostOut])
+async def get_my_posts(
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user)
+):
+    """
+    현재 로그인한 사용자가 작성한 모든 게시물 목록을 반환합니다.
+    """
+    stmt = (
+        select(Posts)
+        .options(joinedload(Posts.user))
+        .where(Posts.user_id == current_user.user_id)
+        .order_by(desc(Posts.created_at))
+    )
     result = await db.execute(stmt)
     posts = result.scalars().all()
     return posts

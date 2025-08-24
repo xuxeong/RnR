@@ -9,16 +9,16 @@ import axiosInstance from './axiosInstance';
  * @param {number} [workId] - 작품 ID (선택 사항)
  * @returns {Promise<Array<object>>} - 게시물 목록 배열
  */
-export const getPosts = async (type = null, workId = null) => {
+export const getPosts = async ({ sort = 'recent', type = null, workId = null } = {}) => {
   try {
-    const params = {};
+    const params = { sort, timestamp: new Date().getTime(), };
     if (type) params.type = type;
     if (workId) params.work_id = workId;
     
     const response = await axiosInstance.get('/posts', { params });
     return response.data;
   } catch (error) {
-    console.error('게시물 목록 조회 실패:', error.response?.data || error.message);
+    console.error('게시물 목록 조회 실패 (정렬: ${sort}):', error.response?.data || error.message);
     throw error;
   }
 };
@@ -123,6 +123,19 @@ export const getLikedPosts = async () => {
     return response.data;
   } catch (error) {
     console.error('좋아요한 게시물 조회 실패:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * 내가 쓴 게시물 목록 조회 API
+ */
+export const getMyPosts = async () => {
+  try {
+    const response = await axiosInstance.get('/posts/my-feed');
+    return response.data;
+  } catch (error) {
+    console.error('내가 쓴 게시물 조회 실패:', error.response?.data || error.message);
     throw error;
   }
 };
